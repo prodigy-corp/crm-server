@@ -1,7 +1,7 @@
 # Multi-stage build for production-ready NestJS application
 
 # Stage 1: Build stage
-FROM node:20-alpine AS builder
+FROM node:25-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache libc6-compat python3 make g++
@@ -30,7 +30,7 @@ RUN pnpm build
 RUN pnpm prune --prod
 
 # Stage 2: Production stage
-FROM node:20-alpine AS runner
+FROM node:25-alpine AS runner
 
 # Install dumb-init for proper signal handling
 RUN apk add --no-cache dumb-init
