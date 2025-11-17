@@ -14,12 +14,14 @@ import { AdminBlogsController } from './controllers/admin-blogs.controller';
 import { AdminRolesController } from './controllers/admin-roles.controller';
 import { AdminDashboardController } from './controllers/admin-dashboard.controller';
 import { AdminSystemController } from './controllers/admin-system.controller';
+import { AdminEmployeeController } from './controllers/admin-employee.controller';
 import { AdminService } from './admin.service';
 import { AdminUsersService } from './services/admin-users.service';
 import { AdminBlogsService } from './services/admin-blogs.service';
 import { AdminRolesService } from './services/admin-roles.service';
 import { AdminDashboardService } from './services/admin-dashboard.service';
 import { AdminSystemService } from './services/admin-system.service';
+import { AdminEmployeeService } from './services/admin-employee.service';
 
 @Module({
   imports: [PrismaModule, CommonModule, CmsModule, UploadModule],
@@ -34,6 +36,7 @@ import { AdminSystemService } from './services/admin-system.service';
     AdminCmsBannerController,
     AdminCmsSettingsController,
     AdminCmsTestimonialController,
+    AdminEmployeeController,
   ],
   providers: [
     AdminService,
@@ -42,6 +45,7 @@ import { AdminSystemService } from './services/admin-system.service';
     AdminRolesService,
     AdminDashboardService,
     AdminSystemService,
+    AdminEmployeeService,
   ],
   exports: [
     AdminService,
@@ -50,6 +54,7 @@ import { AdminSystemService } from './services/admin-system.service';
     AdminRolesService,
     AdminDashboardService,
     AdminSystemService,
+    AdminEmployeeService,
   ],
 })
 export class AdminModule {}
