@@ -1,0 +1,678 @@
+// Enhanced Prisma Schema with Indexes, Constraints, and Best Practices
+// This is a reference schema showing production-ready patterns
+// Copy the models you need to your actual schema.prisma
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== User Management ====================
+
+model User {
+  id       String  @id @default(cuid())
+  email    String  @unique
+  name     String
+  avatar   String?
+  password String? // Nullable for OAuth users
+  phone    String?
+
+  // Account status
+  status             UserStatus @default(ACTIVE)
+  isEmailVerified    Boolean    @default(false)
+  isTwoFactorEnabled Boolean    @default(false)
+  isSellerVerified   Boolean    @default(false)
+
+  // Security fields
+  blockedUntil    DateTime?
+  lastLoginAt     DateTime?
+  emailVerifiedAt DateTime?
+
+  // Stripe integration
+  stripeCustomerId         String?
+  stripeOnboardingComplete Boolean @default(false)
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  // Relations
+  accounts             Account[]
+  roles                UserRole[]
+  loginHistory         LoginHistory[]
+  notificationSettings NotificationSettings?
+  notifications        Notification[]
+  blogs                Blog[]
+  auditLogs            AuditLog[]
+  siteSettingsUpdates  SiteSettings[]        @relation("SiteSettingsUpdater")
+  seoSettingsUpdates   SEOSettings[]         @relation("SEOSettingsUpdater")
+  heroSectionsUpdated  HeroSection[]         @relation("HeroSectionUpdater")
+  bannersUpdated       Banner[]              @relation("BannerUpdater")
+  testimonialsUpdated  Testimonial[]         @relation("TestimonialUpdater")
+
+  // Indexes
+  @@index([email])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt]) // For soft delete queries
+  @@map("users")
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+  PENDING
+}
+
+// ==================== Authentication ====================
+
+model Account {
+  id                String    @id @default(cuid())
+  userId            String
+  type              String // oauth, credentials
+  provider          String // google, facebook, credentials
+  providerAccountId String? // Provider's user ID
+  refreshToken      String?   @db.Text
+  accessToken       String?   @db.Text
+  expiresAt         DateTime?
+  tokenType         String?
+  scope             String?
+  idToken           String?   @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Composite unique constraint
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@index([provider])
+  @@map("accounts")
+}
+
+model UserOtp {
+  id        String   @id @default(cuid())
+  email     String
+  otp       String
+  type      OtpType  @default(VERIFY_EMAIL)
+  expiresAt DateTime
+
+  createdAt DateTime @default(now())
+
+  // Indexes for performance
+  @@index([email])
+  @@index([otp])
+  @@index([expiresAt])
+  @@map("user_otps")
+}
+
+enum OtpType {
+  VERIFY_EMAIL
+  RESET_PASSWORD
+  TWO_FACTOR
+}
+
+model LoginHistory {
+  id        String       @id @default(cuid())
+  userId    String
+  attempt   LoginAttempt
+  ip        String?
+  userAgent String?      @db.Text
+  country   String?
+  city      String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes for security monitoring
+  @@index([userId])
+  @@index([createdAt])
+  @@index([ip])
+  @@index([attempt])
+  @@map("login_history")
+}
+
+enum LoginAttempt {
+  SUCCESS
+  FAILED
+  BLOCKED
+  TWO_FACTOR_SENT
+  RESET_PASSWORD
+}
+
+// ==================== RBAC (Role-Based Access Control) ====================
+
+model Role {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users           UserRole[]
+  rolePermissions RolePermission[]
+
+  @@index([name])
+  @@map("roles")
+}
+
+model Permission {
+  id          String  @id @default(cuid())
+  name        String  @unique // e.g., "users:read", "posts:write"
+  description String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rolePermissions RolePermission[]
+
+  @@index([name])
+  @@map("permissions")
+}
+
+model UserRole {
+  id     String @id @default(cuid())
+  userId String
+  roleId String
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, roleId])
+  @@index([userId])
+  @@index([roleId])
+  @@map("user_roles")
+}
+
+model RolePermission {
+  id           String @id @default(cuid())
+  roleId       String
+  permissionId String
+
+  createdAt DateTime @default(now())
+
+  role        Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permissions Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
+  @@index([roleId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+// ==================== Notifications ====================
+
+enum NotificationType {
+  BOOKING
+  REVIEW
+  PAYMENT
+  ALERT
+  SYSTEM
+  COUPON
+  WISHLIST
+  EVENT
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  message   String           @db.Text
+  link      String?
+  image     String?
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([type])
+  @@index([read])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationSettings {
+  id         String  @id @default(cuid())
+  userId     String  @unique
+  newBooking Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notification_settings")
+}
+
+// ==================== Audit Log ====================
+
+model AuditLog {
+  id        String  @id @default(cuid())
+  userId    String? // Nullable for system actions
+  action    String // e.g., "user.created", "user.deleted"
+  entity    String // e.g., "User", "Post"
+  entityId  String
+  changes   Json? // Store before/after state
+  ip        String?
+  userAgent String? @db.Text
+
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  // Indexes for audit queries
+  @@index([userId])
+  @@index([action])
+  @@index([entity])
+  @@index([entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+// ==================== Example: Seller Verification ====================
+
+model SellerVerification {
+  id                 String  @id @default(cuid())
+  userId             String  @unique
+  verificationStatus String  @default("PENDING")
+  documentUrl        String?
+  rejectionReason    String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([verificationStatus])
+  @@map("seller_verifications")
+}
+
+model Category {
+  id        String         @id @default(ulid())
+  name      String         @unique
+  slug      String         @unique @db.VarChar(255)
+  icon      String?
+  parentId  String?
+  parent    Category?      @relation("CategoryToCategory", fields: [parentId], references: [id], onDelete: Cascade)
+  children  Category[]     @relation("CategoryToCategory")
+  status    CategoryStatus @default(ACTIVE)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  blogs     Blog[]
+
+  @@index([name])
+  @@index([slug])
+  @@map("categories")
+}
+
+enum CategoryStatus {
+  ACTIVE
+  INACTIVE
+}
+
+// ==================== Blog System ====================
+
+model Blog {
+  id      String  @id @default(ulid())
+  title   String  @db.VarChar(255)
+  slug    String  @unique @db.VarChar(300)
+  excerpt String? @db.Text
+  content String  @db.Text
+
+  // Featured image
+  featuredImage String?
+  imageAlt      String? @db.VarChar(255)
+
+  // SEO Fields
+  metaTitle       String?  @db.VarChar(70) // Optimal length for Google
+  metaDescription String?  @db.VarChar(160) // Optimal length for Google
+  focusKeyword    String?  @db.VarChar(100)
+  keywords        String[] // Array of keywords
+
+  // Open Graph / Social Media
+  ogTitle       String? @db.VarChar(70)
+  ogDescription String? @db.VarChar(160)
+  ogImage       String?
+
+  // Twitter Card
+  twitterTitle       String? @db.VarChar(70)
+  twitterDescription String? @db.VarChar(160)
+  twitterImage       String?
+
+  // Schema.org structured data
+  schemaType String? @default("Article") // Article, BlogPosting, NewsArticle
+
+  // Publishing
+  status       BlogStatus @default(DRAFT)
+  publishedAt  DateTime?
+  scheduledFor DateTime?
+
+  // Author
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // Category
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  // Tags
+  tags BlogTag[]
+
+  // Analytics & Engagement
+  viewCount    Int @default(0)
+  likeCount    Int @default(0)
+  commentCount Int @default(0)
+  shareCount   Int @default(0)
+
+  // SEO Analytics
+  readingTime Int? // in minutes
+  wordCount   Int?
+
+  // Content Features
+  isFeatured    Boolean @default(false)
+  allowComments Boolean @default(true)
+  isIndexable   Boolean @default(true) // For robots meta tag
+
+  // Canonical & Alternate
+  canonicalUrl String?
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  // Relations
+  comments  BlogComment[]
+  blogViews BlogView[]
+
+  // Indexes for performance
+  @@index([slug])
+  @@index([status])
+  @@index([authorId])
+  @@index([categoryId])
+  @@index([publishedAt])
+  @@index([isFeatured])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@index([focusKeyword])
+  @@map("blogs")
+}
+
+enum BlogStatus {
+  DRAFT
+  PUBLISHED
+  SCHEDULED
+  ARCHIVED
+}
+
+model Tag {
+  id          String  @id @default(ulid())
+  name        String  @unique @db.VarChar(50)
+  slug        String  @unique @db.VarChar(60)
+  description String? @db.Text
+
+  // SEO for tag pages
+  metaTitle       String? @db.VarChar(70)
+  metaDescription String? @db.VarChar(160)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  blogs BlogTag[]
+
+  @@index([slug])
+  @@map("tags")
+}
+
+model BlogTag {
+  id     String @id @default(ulid())
+  blogId String
+  tagId  String
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([blogId, tagId])
+  @@index([blogId])
+  @@index([tagId])
+  @@map("blog_tags")
+}
+
+model BlogComment {
+  id       String  @id @default(ulid())
+  blogId   String
+  userId   String?
+  parentId String? // For nested comments
+
+  name    String? @db.VarChar(100) // For guest comments
+  email   String? @db.VarChar(255) // For guest comments
+  content String  @db.Text
+
+  status     CommentStatus @default(PENDING)
+  isApproved Boolean       @default(false)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft delete
+
+  blog    Blog          @relation(fields: [blogId], references: [id], onDelete: Cascade)
+  parent  BlogComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies BlogComment[] @relation("CommentReplies")
+
+  @@index([blogId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("blog_comments")
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  SPAM
+  REJECTED
+}
+
+model BlogView {
+  id        String  @id @default(ulid())
+  blogId    String
+  userId    String?
+  ip        String?
+  userAgent String? @db.Text
+  referer   String? @db.Text
+  country   String?
+  city      String?
+
+  createdAt DateTime @default(now())
+
+  blog Blog @relation(fields: [blogId], references: [id], onDelete: Cascade)
+
+  @@index([blogId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([ip])
+  @@map("blog_views")
+}
+
+// ==================== CMS Settings ====================
+
+model SiteSettings {
+  id String @id @default(cuid())
+
+  // Basic Information
+  siteName        String  @db.VarChar(255)
+  siteUrl         String  @db.VarChar(500)
+  siteDescription String? @db.Text
+
+  // Branding
+  logo    String? @db.VarChar(500)
+  favicon String? @db.VarChar(500)
+
+  // Contact Information
+  contactEmail   String? @db.VarChar(255)
+  contactPhone   String? @db.VarChar(50)
+  contactAddress String? @db.Text
+
+  // Social Media Links (stored as JSON)
+  socialLinks Json? @default("{}")
+
+  // Business Information
+  businessHours String? @db.Text
+  timezone      String  @default("UTC") @db.VarChar(100)
+  language      String  @default("en") @db.VarChar(10)
+  currency      String  @default("USD") @db.VarChar(10)
+
+  // Audit fields
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  updater User?   @relation("SiteSettingsUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([updatedAt])
+  @@map("site_settings")
+}
+
+model SEOSettings {
+  id String @id @default(cuid())
+
+  // Meta Tags
+  metaTitle       String?  @db.VarChar(70)
+  metaDescription String?  @db.VarChar(160)
+  metaKeywords    String[] // Array of keywords
+
+  // Open Graph (Facebook)
+  ogTitle       String? @db.VarChar(70)
+  ogDescription String? @db.VarChar(160)
+  ogImage       String? @db.VarChar(500)
+
+  // Twitter Card
+  twitterCard        String? @default("summary_large_image") @db.VarChar(50)
+  twitterTitle       String? @db.VarChar(70)
+  twitterDescription String? @db.VarChar(160)
+  twitterImage       String? @db.VarChar(500)
+  twitterSite        String? @db.VarChar(100)
+  twitterCreator     String? @db.VarChar(100)
+
+  // Canonical & Alternate
+  canonicalUrl String? @db.VarChar(500)
+
+  // Robots Directives (stored as JSON)
+  robotsDirectives Json? @default("{\"index\":true,\"follow\":true,\"noarchive\":false,\"nosnippet\":false,\"noimageindex\":false}")
+
+  // Structured Data
+  structuredData Json?
+
+  // Verification & Analytics
+  googleSiteVerification String? @db.VarChar(255)
+  googleAnalyticsId      String? @db.VarChar(100)
+  googleTagManagerId     String? @db.VarChar(100)
+  facebookPixelId        String? @db.VarChar(100)
+  facebookAppId          String? @db.VarChar(100)
+
+  // Audit fields
+  updatedAt DateTime @updatedAt
+  updatedBy String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  updater User? @relation("SEOSettingsUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([updatedAt])
+  @@map("seo_settings")
+}
+
+// ==================== CMS Content ====================
+
+model HeroSection {
+  id                  String   @id @default(ulid())
+  title               String   @db.VarChar(255)
+  subtitle            String?  @db.VarChar(300)
+  description         String?  @db.Text
+  primaryButtonText   String?  @db.VarChar(50)
+  primaryButtonUrl    String?  @db.VarChar(500)
+  secondaryButtonText String?  @db.VarChar(50)
+  secondaryButtonUrl  String?  @db.VarChar(500)
+  backgroundImage     String?  @db.VarChar(500)
+  backgroundVideo     String?  @db.VarChar(500)
+  overlayOpacity      Int?
+  textAlignment       String   @default("left") @db.VarChar(10) // left, center, right
+  isActive            Boolean  @default(true)
+  displayOrder        Int      @default(0)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+  updatedBy           String?
+  updater             User?    @relation("HeroSectionUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([displayOrder])
+  @@index([createdAt])
+  @@map("hero_sections")
+}
+
+model Banner {
+  id              String    @id @default(ulid())
+  title           String    @db.VarChar(100)
+  message         String?   @db.VarChar(500)
+  type            String    @db.VarChar(20) // info | warning | success | error | promotion
+  backgroundColor String?   @db.VarChar(7)
+  textColor       String?   @db.VarChar(7)
+  buttonText      String?   @db.VarChar(50)
+  buttonUrl       String?   @db.VarChar(500)
+  buttonColor     String?   @db.VarChar(7)
+  icon            String?   @db.VarChar(500)
+  isActive        Boolean   @default(true)
+  isDismissible   Boolean   @default(true)
+  startDate       DateTime?
+  endDate         DateTime?
+  displayOrder    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  updatedBy       String?
+  updater         User?     @relation("BannerUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([type])
+  @@index([startDate])
+  @@index([endDate])
+  @@index([displayOrder])
+  @@index([createdAt])
+  @@map("banners")
+}
+
+model Testimonial {
+  id           String   @id @default(ulid())
+  name         String   @db.VarChar(100)
+  position     String?  @db.VarChar(100)
+  company      String?  @db.VarChar(100)
+  content      String   @db.Text
+  rating       Int?
+  avatar       String?  @db.VarChar(500)
+  isActive     Boolean  @default(true)
+  isFeatured   Boolean  @default(false)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  updatedBy    String?
+  updater      User?    @relation("TestimonialUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+
+  @@index([isActive])
+  @@index([isFeatured])
+  @@index([rating])
+  @@index([displayOrder])
+  @@index([createdAt])
+  @@map("testimonials")
+}
