@@ -616,3 +616,9 @@ export class ResignEmployeeDto {
   @IsDateString()
   resignDate?: string;
 }
+
+export class UpdateEmployeeSalaryPaymentStatusDto {
+  @ApiProperty({ enum: SalaryPaymentStatus, example: SalaryPaymentStatus.PAID })
+  @IsEnum(SalaryPaymentStatus)
+  status!: SalaryPaymentStatus;
+}

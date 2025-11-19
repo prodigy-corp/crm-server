@@ -792,4 +792,45 @@ export class AdminEmployeeService {
     this.logger.log(`Created salary payment for employee id: ${employeeId}`);
     return payment;
   }
+
+  async updateSalaryPaymentStatus(
+    employeeId: string,
+    paymentId: string,
+    status: SalaryPaymentStatus,
+  ) {
+    const employee = await this.prisma.employee.findFirst({
+      where: { id: employeeId, deletedAt: null },
+    });
+
+    if (!employee) {
+      throw new NotFoundException('Employee not found');
+    }
+
+    const payment = await this.prisma.employeeSalaryPayment.findFirst({
+      where: {
+        id: paymentId,
+        employeeId,
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Salary payment not found');
+    }
+
+    const updated = await this.prisma.employeeSalaryPayment.update({
+      where: { id: paymentId },
+      data: {
+        status,
+        // Set payment date if marking as PAID
+        ...(status === SalaryPaymentStatus.PAID && !payment.paymentDate
+          ? { paymentDate: new Date() }
+          : {}),
+      },
+    });
+
+    this.logger.log(
+      `Updated salary payment status for payment id: ${paymentId} to ${status}`,
+    );
+    return updated;
+  }
 }

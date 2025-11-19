@@ -5,6 +5,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Put,
   Query,
@@ -41,6 +42,7 @@ import {
   ResignEmployeeDto,
   UpsertEmployeeAttendanceDto,
   UpdateAdminEmployeeDto,
+  UpdateEmployeeSalaryPaymentStatusDto,
 } from '../dto/admin-employee.dto';
 
 @ApiTags('Admin - Employees')
@@ -270,5 +272,29 @@ export class AdminEmployeeController {
     @Body() dto: CreateEmployeeSalaryPaymentDto,
   ) {
     return this.adminEmployeeService.createSalaryPayment(id, dto);
+  }
+
+  @Patch(':id/salary/payments/:paymentId/status')
+  @ApiOperation({ summary: 'Update salary payment status' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Salary payment status updated successfully',
+  })
+  @ApiResponse({
+    status: HttpStatus.NOT_FOUND,
+    description: 'Employee or payment not found',
+  })
+  @ApiParam({ name: 'id', type: String, description: 'Employee ID' })
+  @ApiParam({ name: 'paymentId', type: String, description: 'Payment ID' })
+  async updateSalaryPaymentStatus(
+    @Param('id') id: string,
+    @Param('paymentId') paymentId: string,
+    @Body() dto: UpdateEmployeeSalaryPaymentStatusDto,
+  ) {
+    return this.adminEmployeeService.updateSalaryPaymentStatus(
+      id,
+      paymentId,
+      dto.status,
+    );
   }
 }
