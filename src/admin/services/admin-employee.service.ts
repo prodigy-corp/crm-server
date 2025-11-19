@@ -692,6 +692,58 @@ export class AdminEmployeeService {
     return increment;
   }
 
+  async getAllSalaryPayments(query: EmployeeSalaryPaymentQueryDto) {
+    const { page = 1, limit = 10, month, year, status } = query;
+
+    const pageNum = Number(page) || 1;
+    const limitNum = Number(limit) || 10;
+    const skip = (pageNum - 1) * limitNum;
+
+    const where: any = {};
+
+    if (month) {
+      where.month = month;
+    }
+
+    if (year) {
+      where.year = year;
+    }
+
+    if (status) {
+      where.status = status;
+    }
+
+    const [data, total] = await this.prisma.$transaction([
+      this.prisma.employeeSalaryPayment.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: [{ year: 'desc' }, { month: 'desc' }],
+        include: {
+          employee: {
+            select: {
+              id: true,
+              name: true,
+              employeeCode: true,
+              designation: true,
+            },
+          },
+        },
+      }),
+      this.prisma.employeeSalaryPayment.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: pageNum,
+        limit: limitNum,
+        totalPages: Math.ceil(total / limitNum),
+      },
+    };
+  }
+
   async getSalaryPayments(
     employeeId: string,
     query: EmployeeSalaryPaymentQueryDto,

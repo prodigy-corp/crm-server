@@ -69,6 +69,16 @@ export class AdminEmployeeController {
     return this.adminEmployeeService.getAllEmployees(query);
   }
 
+  @Get('salary/payments')
+  @ApiOperation({ summary: 'Get all salary payments' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'Salary payments retrieved successfully',
+  })
+  async getAllSalaryPayments(@Query() query: EmployeeSalaryPaymentQueryDto) {
+    return this.adminEmployeeService.getAllSalaryPayments(query);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get employee by ID' })
   @ApiResponse({
