@@ -64,6 +64,18 @@ export class AdminEmployeeService {
       where.status = status;
     }
 
+    // ✅ FIX: Only include employees whose linked users have the 'employee' role
+    // This ensures we only show actual employees, not all user records
+    where.user = {
+      roles: {
+        some: {
+          role: {
+            name: 'employee',
+          },
+        },
+      },
+    };
+
     const [data, total] = await this.prisma.$transaction([
       this.prisma.employee.findMany({
         where,
@@ -82,6 +94,15 @@ export class AdminEmployeeService {
           status: true,
           baseSalary: true,
           createdAt: true,
+          // Include user info to verify role
+          user: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              status: true,
+            },
+          },
         },
       }),
       this.prisma.employee.count({ where }),
@@ -134,8 +155,73 @@ export class AdminEmployeeService {
 
   async createEmployee(dto: CreateAdminEmployeeDto) {
     console.log(dto);
+
+    // ✅ FIX: If userId is provided, verify/assign employee role
+    if (dto.userId) {
+      const user = await this.prisma.user.findUnique({
+        where: { id: dto.userId },
+        include: {
+          roles: {
+            include: {
+              role: true,
+            },
+          },
+        },
+      });
+
+      if (!user) {
+        throw new NotFoundException('User not found');
+      }
+
+      // Check if user already linked to another employee
+      const existingEmployee = await this.prisma.employee.findFirst({
+        where: {
+          userId: dto.userId,
+          deletedAt: null,
+        },
+      });
+
+      if (existingEmployee) {
+        throw new BadRequestException(
+          'This user is already linked to another employee',
+        );
+      }
+
+      // Check if user has employee role
+      const hasEmployeeRole = user.roles.some(
+        (ur) => ur.role.name === 'employee',
+      );
+
+      // If user doesn't have employee role, auto-assign it
+      if (!hasEmployeeRole) {
+        this.logger.warn(
+          `User ${dto.userId} doesn't have employee role. Auto-assigning...`,
+        );
+
+        const employeeRole = await this.prisma.role.findUnique({
+          where: { name: 'employee' },
+        });
+
+        if (!employeeRole) {
+          throw new BadRequestException(
+            'Employee role not found in system. Please contact administrator.',
+          );
+        }
+
+        await this.prisma.userRole.create({
+          data: {
+            userId: dto.userId,
+            roleId: employeeRole.id,
+          },
+        });
+
+        this.logger.log(`Assigned employee role to user ${dto.userId}`);
+      }
+    }
+
     const employee = await this.prisma.employee.create({
       data: {
+        userId: dto.userId,
         employeeCode: dto.employeeCode,
         name: dto.name,
         designation: dto.designation,
@@ -193,9 +279,48 @@ export class AdminEmployeeService {
     if (dto.userId) {
       const user = await this.prisma.user.findUnique({
         where: { id: dto.userId },
+        include: {
+          roles: {
+            include: {
+              role: true,
+            },
+          },
+        },
       });
+
       if (!user) {
         throw new NotFoundException('User not found');
+      }
+
+      // ✅ FIX: Check if user has employee role
+      const hasEmployeeRole = user.roles.some(
+        (ur) => ur.role.name === 'employee',
+      );
+
+      // If user doesn't have employee role, auto-assign it
+      if (!hasEmployeeRole) {
+        this.logger.warn(
+          `User ${dto.userId} doesn't have employee role. Auto-assigning...`,
+        );
+
+        const employeeRole = await this.prisma.role.findUnique({
+          where: { name: 'employee' },
+        });
+
+        if (!employeeRole) {
+          throw new BadRequestException(
+            'Employee role not found in system. Please contact administrator.',
+          );
+        }
+
+        await this.prisma.userRole.create({
+          data: {
+            userId: dto.userId,
+            roleId: employeeRole.id,
+          },
+        });
+
+        this.logger.log(`Assigned employee role to user ${dto.userId}`);
       }
 
       const linkedEmployee = await this.prisma.employee.findFirst({

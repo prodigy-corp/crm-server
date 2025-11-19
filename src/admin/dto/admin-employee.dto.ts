@@ -208,6 +208,14 @@ export class CreateAdminEmployeeDto {
   @IsOptional()
   @IsEnum(EmployeeStatus)
   status?: EmployeeStatus;
+
+  @ApiPropertyOptional({
+    example: 'uuid-of-user',
+    description: 'User ID to link this employee to an existing user account',
+  })
+  @IsOptional()
+  @IsString()
+  userId?: string;
 }
 
 export class UpdateAdminEmployeeDto {
