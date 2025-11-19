@@ -42,22 +42,25 @@ model User {
   deletedAt DateTime? // Soft delete
 
   // Relations
-  accounts             Account[]
-  roles                UserRole[]
-  loginHistory         LoginHistory[]
-  notificationSettings NotificationSettings?
-  notifications        Notification[]
-  blogs                Blog[]
-  auditLogs            AuditLog[]
-  siteSettingsUpdates  SiteSettings[]        @relation("SiteSettingsUpdater")
-  seoSettingsUpdates   SEOSettings[]         @relation("SEOSettingsUpdater")
-  heroSectionsUpdated  HeroSection[]         @relation("HeroSectionUpdater")
-  bannersUpdated       Banner[]              @relation("BannerUpdater")
-  testimonialsUpdated  Testimonial[]         @relation("TestimonialUpdater")
+  accounts                 Account[]
+  roles                    UserRole[]
+  loginHistory             LoginHistory[]
+  notificationSettings     NotificationSettings?
+  notifications            Notification[]
+  blogs                    Blog[]
+  auditLogs                AuditLog[]
+  siteSettingsUpdates      SiteSettings[]            @relation("SiteSettingsUpdater")
+  seoSettingsUpdates       SEOSettings[]             @relation("SEOSettingsUpdater")
+  heroSectionsUpdated      HeroSection[]             @relation("HeroSectionUpdater")
+  bannersUpdated           Banner[]                  @relation("BannerUpdater")
+  testimonialsUpdated      Testimonial[]             @relation("TestimonialUpdater")
   salaryIncrementsApproved EmployeeSalaryIncrement[]
 
   // Employee relation (one-to-one)
   employee Employee?
+
+  // Client relation (one-to-one) - inverse side
+  client Client?
 
   // Indexes
   @@index([email])
@@ -544,7 +547,7 @@ model SiteSettings {
   createdAt DateTime @default(now())
 
   // Relations
-  updater User?   @relation("SiteSettingsUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
+  updater User? @relation("SiteSettingsUpdater", fields: [updatedBy], references: [id], onDelete: SetNull)
 
   @@index([updatedAt])
   @@map("site_settings")
@@ -679,70 +682,70 @@ model Testimonial {
   @@index([displayOrder])
   @@index([createdAt])
   @@map("testimonials")
- }
+}
 
- enum EmployeeStatus {
-   ACTIVE
-   INACTIVE
-   RESIGNED
- }
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  RESIGNED
+}
 
- enum AttendanceStatus {
-   PRESENT
-   ABSENT
-   LATE
-   ON_LEAVE
- }
+enum AttendanceStatus {
+  PRESENT
+  ABSENT
+  LATE
+  ON_LEAVE
+}
 
- enum SalaryPaymentStatus {
-   PENDING
-   PAID
-   CANCELLED
- }
+enum SalaryPaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
 
- model Employee {
-   id                       String                    @id @default(cuid())
+model Employee {
+  id                       String                    @id @default(cuid())
   userId                   String?                   @unique
   employeeCode             String?                   @db.VarChar(50)
   name                     String                    @db.VarChar(150)
-   designation              String?                   @db.VarChar(100)
-   fatherName               String?                   @db.VarChar(150)
-   motherName               String?                   @db.VarChar(150)
-   dateOfBirth              DateTime?
-   nationalId               String?                   @db.VarChar(100)
-   bloodGroup               String?                   @db.VarChar(10)
-   joiningDate              DateTime
-   resignDate               DateTime?
-   baseSalary               Decimal                   @db.Decimal(10, 2)
-   mobileNumber             String?                   @db.VarChar(20)
-   alternativeContactNumber String?                   @db.VarChar(20)
-   corporateContactNumber   String?                   @db.VarChar(20)
-   emailAddress             String?                   @db.VarChar(255)
-   facebookProfileLink      String?                   @db.VarChar(500)
-   bankAccountNumber        String?                   @db.VarChar(100)
-   branchName               String?                   @db.VarChar(150)
-   bankName                 String?                   @db.VarChar(150)
-   fatherContactNumber      String?                   @db.VarChar(20)
-   motherContactNumber      String?                   @db.VarChar(20)
-   emergencyContactNumber   String?                   @db.VarChar(20)
-   sscRoll                  String?                   @db.VarChar(50)
-   sscRegistrationNumber    String?                   @db.VarChar(50)
-   sscPassingYear           Int?
-   sscBoard                 String?                   @db.VarChar(50)
-   sscResult                String?                   @db.VarChar(20)
-   hscRoll                  String?                   @db.VarChar(50)
-   hscRegistrationNumber    String?                   @db.VarChar(50)
-   hscPassingYear           Int?
-   hscBoard                 String?                   @db.VarChar(50)
-   hscResult                String?                   @db.VarChar(20)
-   honorsRoll               String?                   @db.VarChar(50)
-   honorsRegistrationNumber String?                   @db.VarChar(50)
-   honorsPassingYear        Int?
-   honorsInstitutionName    String?                   @db.VarChar(255)
-   honorsSubject            String?                   @db.VarChar(100)
-   honorsResult             String?                   @db.VarChar(20)
-   photoUrl                 String?                   @db.VarChar(500)
-   status                   EmployeeStatus            @default(ACTIVE)
+  designation              String?                   @db.VarChar(100)
+  fatherName               String?                   @db.VarChar(150)
+  motherName               String?                   @db.VarChar(150)
+  dateOfBirth              DateTime?
+  nationalId               String?                   @db.VarChar(100)
+  bloodGroup               String?                   @db.VarChar(10)
+  joiningDate              DateTime
+  resignDate               DateTime?
+  baseSalary               Decimal                   @db.Decimal(10, 2)
+  mobileNumber             String?                   @db.VarChar(20)
+  alternativeContactNumber String?                   @db.VarChar(20)
+  corporateContactNumber   String?                   @db.VarChar(20)
+  emailAddress             String?                   @db.VarChar(255)
+  facebookProfileLink      String?                   @db.VarChar(500)
+  bankAccountNumber        String?                   @db.VarChar(100)
+  branchName               String?                   @db.VarChar(150)
+  bankName                 String?                   @db.VarChar(150)
+  fatherContactNumber      String?                   @db.VarChar(20)
+  motherContactNumber      String?                   @db.VarChar(20)
+  emergencyContactNumber   String?                   @db.VarChar(20)
+  sscRoll                  String?                   @db.VarChar(50)
+  sscRegistrationNumber    String?                   @db.VarChar(50)
+  sscPassingYear           Int?
+  sscBoard                 String?                   @db.VarChar(50)
+  sscResult                String?                   @db.VarChar(20)
+  hscRoll                  String?                   @db.VarChar(50)
+  hscRegistrationNumber    String?                   @db.VarChar(50)
+  hscPassingYear           Int?
+  hscBoard                 String?                   @db.VarChar(50)
+  hscResult                String?                   @db.VarChar(20)
+  honorsRoll               String?                   @db.VarChar(50)
+  honorsRegistrationNumber String?                   @db.VarChar(50)
+  honorsPassingYear        Int?
+  honorsInstitutionName    String?                   @db.VarChar(255)
+  honorsSubject            String?                   @db.VarChar(100)
+  honorsResult             String?                   @db.VarChar(20)
+  photoUrl                 String?                   @db.VarChar(500)
+  status                   EmployeeStatus            @default(ACTIVE)
   createdAt                DateTime                  @default(now())
   updatedAt                DateTime                  @updatedAt
   deletedAt                DateTime?
@@ -751,67 +754,133 @@ model Testimonial {
   salaryIncrements         EmployeeSalaryIncrement[]
   salaryPayments           EmployeeSalaryPayment[]
 
-   @@index([name])
-   @@index([status])
-   @@index([createdAt])
-   @@index([deletedAt])
-   @@map("employees")
- }
+  @@index([name])
+  @@index([status])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("employees")
+}
 
- model EmployeeAttendance {
-   id           String           @id @default(cuid())
-   employeeId   String
-   date         DateTime
-   checkInAt    DateTime?
-   checkOutAt   DateTime?
-   workingHours Decimal?         @db.Decimal(5, 2)
-   status       AttendanceStatus @default(PRESENT)
-   createdAt    DateTime         @default(now())
-   updatedAt    DateTime         @updatedAt
-   employee     Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+model EmployeeAttendance {
+  id           String           @id @default(cuid())
+  employeeId   String
+  date         DateTime
+  checkInAt    DateTime?
+  checkOutAt   DateTime?
+  workingHours Decimal?         @db.Decimal(5, 2)
+  status       AttendanceStatus @default(PRESENT)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  employee     Employee         @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
-   @@unique([employeeId, date])
-   @@index([employeeId])
-   @@index([date])
-   @@index([status])
-   @@map("employee_attendance")
- }
+  @@unique([employeeId, date])
+  @@index([employeeId])
+  @@index([date])
+  @@index([status])
+  @@map("employee_attendance")
+}
 
- model EmployeeSalaryIncrement {
-   id              String     @id @default(cuid())
-   employeeId      String
-   previousSalary  Decimal    @db.Decimal(10, 2)
-   newSalary       Decimal    @db.Decimal(10, 2)
-   incrementAmount Decimal    @db.Decimal(10, 2)
-   effectiveFrom   DateTime
-   reason          String?    @db.Text
-   approvedById    String?
-   createdAt       DateTime   @default(now())
-   employee        Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-   approvedBy      User?      @relation(fields: [approvedById], references: [id], onDelete: SetNull)
+model EmployeeSalaryIncrement {
+  id              String   @id @default(cuid())
+  employeeId      String
+  previousSalary  Decimal  @db.Decimal(10, 2)
+  newSalary       Decimal  @db.Decimal(10, 2)
+  incrementAmount Decimal  @db.Decimal(10, 2)
+  effectiveFrom   DateTime
+  reason          String?  @db.Text
+  approvedById    String?
+  createdAt       DateTime @default(now())
+  employee        Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  approvedBy      User?    @relation(fields: [approvedById], references: [id], onDelete: SetNull)
 
-   @@index([employeeId])
-   @@index([effectiveFrom])
-   @@map("employee_salary_increments")
- }
+  @@index([employeeId])
+  @@index([effectiveFrom])
+  @@map("employee_salary_increments")
+}
 
- model EmployeeSalaryPayment {
-   id             String              @id @default(cuid())
-   employeeId     String
-   month          Int
-   year           Int
-   basicSalary    Decimal             @db.Decimal(10, 2)
-   grossSalary    Decimal             @db.Decimal(10, 2)
-   totalDeduction Decimal             @db.Decimal(10, 2)
-   netPayable     Decimal             @db.Decimal(10, 2)
-   paymentDate    DateTime?
-   status         SalaryPaymentStatus @default(PENDING)
-   createdAt      DateTime            @default(now())
-   updatedAt      DateTime            @updatedAt
-   employee       Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+model EmployeeSalaryPayment {
+  id             String              @id @default(cuid())
+  employeeId     String
+  month          Int
+  year           Int
+  basicSalary    Decimal             @db.Decimal(10, 2)
+  grossSalary    Decimal             @db.Decimal(10, 2)
+  totalDeduction Decimal             @db.Decimal(10, 2)
+  netPayable     Decimal             @db.Decimal(10, 2)
+  paymentDate    DateTime?
+  status         SalaryPaymentStatus @default(PENDING)
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  employee       Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
-   @@unique([employeeId, month, year])
-   @@index([employeeId])
-   @@index([status])
-   @@map("employee_salary_payments")
- }
+  @@unique([employeeId, month, year])
+  @@index([employeeId])
+  @@index([status])
+  @@map("employee_salary_payments")
+}
+
+// ==================== Client Management ====================
+
+enum ClientStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum ClientType {
+  INDIVIDUAL
+  BUSINESS
+  ENTERPRISE
+}
+
+model Client {
+  id          String     @id @default(cuid())
+  userId      String?    @unique
+  clientCode  String?    @unique @db.VarChar(50)
+  name        String     @db.VarChar(200)
+  companyName String?    @db.VarChar(100)
+  clientType  ClientType @default(INDIVIDUAL)
+
+  // Contact Information
+  mobileNumber             String? @db.VarChar(20)
+  alternativeContactNumber String? @db.VarChar(20)
+  emailAddress             String? @unique @db.VarChar(255)
+  address                  String? @db.Text
+  city                     String? @db.VarChar(100)
+  state                    String? @db.VarChar(100)
+  zipCode                  String? @db.VarChar(20)
+  country                  String? @db.VarChar(100)
+
+  // Business Information
+  industry           String? @db.VarChar(100)
+  website            String? @db.VarChar(255)
+  taxId              String? @db.VarChar(50)
+  registrationNumber String? @db.VarChar(50)
+
+  // Contract & Business
+  contractStartDate  DateTime?
+  contractEndDate    DateTime?
+  creditLimit        Decimal   @default(0) @db.Decimal(15, 2)
+  outstandingBalance Decimal   @default(0) @db.Decimal(15, 2)
+  notes              String?   @db.Text
+
+  // Status
+  status   ClientStatus @default(ACTIVE)
+  photoUrl String?      @db.VarChar(500)
+
+  // Timestamps
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([name])
+  @@index([status])
+  @@index([clientType])
+  @@index([emailAddress])
+  @@index([createdAt])
+  @@index([deletedAt])
+  @@map("clients")
+}

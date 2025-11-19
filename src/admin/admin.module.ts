@@ -24,6 +24,8 @@ import { AdminSystemService } from './services/admin-system.service';
 import { AdminEmployeeService } from './services/admin-employee.service';
 import { AdminAttendanceController } from './controllers/admin-attendance.controller';
 import { AdminAttendanceService } from './services/admin-attendance.service';
+import { AdminClientController } from './controllers/admin-client.controller';
+import { AdminClientService } from './services/admin-client.service';
 
 @Module({
   imports: [PrismaModule, CommonModule, CmsModule, UploadModule],
@@ -40,6 +42,7 @@ import { AdminAttendanceService } from './services/admin-attendance.service';
     AdminCmsTestimonialController,
     AdminEmployeeController,
     AdminAttendanceController,
+    AdminClientController,
   ],
   providers: [
     AdminService,
@@ -50,6 +53,7 @@ import { AdminAttendanceService } from './services/admin-attendance.service';
     AdminSystemService,
     AdminEmployeeService,
     AdminAttendanceService,
+    AdminClientService,
   ],
   exports: [
     AdminService,

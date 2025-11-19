@@ -341,6 +341,23 @@ async function main() {
         description: 'Employee management',
       },
     }),
+    // Client Management Permissions
+    prisma.permission.upsert({
+      where: { name: 'admin.clients.manage' },
+      update: {},
+      create: {
+        name: 'admin.clients.manage',
+        description: 'Client management (create, update, delete, etc.)',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'admin.clients.view' },
+      update: {},
+      create: {
+        name: 'admin.clients.view',
+        description: 'View client information',
+      },
+    }),
   ]);
 
   console.log(
@@ -379,7 +396,11 @@ async function main() {
       p.name.startsWith('admin.blog.') ||
       p.name.startsWith('admin.settings.') ||
       p.name.startsWith('admin.seo.') ||
+      p.name.startsWith('admin.seo.') ||
       p.name.startsWith('admin.dashboard.') ||
+      p.name.startsWith('admin.employees.') ||
+      p.name.startsWith('admin.clients.') ||
+      p.name.startsWith('roles:') ||
       p.name.startsWith('roles:') ||
       p.name.startsWith('permissions:') ||
       p.name.startsWith('dashboard:'),
