@@ -325,6 +325,22 @@ async function main() {
         description: 'View database statistics',
       },
     }),
+    prisma.permission.upsert({
+      where: { name: 'admin.employees.manage' },
+      update: {},
+      create: {
+        name: 'admin.employees.manage',
+        description: 'Employee management',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'admin.employees.view' },
+      update: {},
+      create: {
+        name: 'admin.employees.view',
+        description: 'Employee management',
+      },
+    }),
   ]);
 
   console.log(

@@ -133,6 +133,7 @@ export class AdminEmployeeService {
   }
 
   async createEmployee(dto: CreateAdminEmployeeDto) {
+    console.log(dto);
     const employee = await this.prisma.employee.create({
       data: {
         employeeCode: dto.employeeCode,

@@ -7,6 +7,7 @@ import {
   IsInt,
   IsNumber,
   IsDateString,
+  MaxLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import {
@@ -53,6 +54,7 @@ export class CreateAdminEmployeeDto {
   @ApiPropertyOptional({ example: 'O+' })
   @IsOptional()
   @IsString()
+  @MaxLength(10)
   bloodGroup?: string;
 
   @ApiProperty({ example: '2024-01-01' })
@@ -247,6 +249,7 @@ export class UpdateAdminEmployeeDto {
   @ApiPropertyOptional({ example: 'O+' })
   @IsOptional()
   @IsString()
+  @MaxLength(10)
   bloodGroup?: string;
 
   @ApiPropertyOptional({ example: '2024-01-01' })
