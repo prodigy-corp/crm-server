@@ -142,7 +142,15 @@ export class AdminClientService {
     }
 
     const client = await this.prisma.client.create({
-      data: createClientDto as any,
+      data: {
+        ...createClientDto,
+        contractStartDate: createClientDto.contractStartDate
+          ? new Date(createClientDto.contractStartDate)
+          : undefined,
+        contractEndDate: createClientDto.contractEndDate
+          ? new Date(createClientDto.contractEndDate)
+          : undefined,
+      } as any,
       include: {
         user: {
           select: {
@@ -193,7 +201,15 @@ export class AdminClientService {
 
     const updated = await this.prisma.client.update({
       where: { id },
-      data: updateClientDto as any,
+      data: {
+        ...updateClientDto,
+        contractStartDate: updateClientDto.contractStartDate
+          ? new Date(updateClientDto.contractStartDate)
+          : undefined,
+        contractEndDate: updateClientDto.contractEndDate
+          ? new Date(updateClientDto.contractEndDate)
+          : undefined,
+      } as any,
       include: {
         user: {
           select: {
