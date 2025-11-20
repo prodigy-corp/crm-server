@@ -16,6 +16,8 @@ import { BlogModule } from './blog/blog.module';
 import { AdminModule } from './admin/admin.module';
 import { AnalyticsModule } from './analytics/analytics.module';
 import { CmsModule } from './cms/cms.module';
+import { EmployeeModule } from './employee/employee.module';
+import { CronModule } from './cron/cron.module';
 import { BullModule } from '@nestjs/bullmq';
 import { redisConfig } from './config/redis.config';
 import { QUEUES } from './queues/queue.constants';
@@ -99,8 +101,9 @@ import { QUEUES } from './queues/queue.constants';
     BlogModule,
     AdminModule,
     AnalyticsModule,
-
     CmsModule,
+    EmployeeModule,
+    CronModule,
   ],
   controllers: [AppController],
   providers: [

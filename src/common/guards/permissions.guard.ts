@@ -1,15 +1,15 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { PrismaService } from 'src/prisma/prisma.service';
 import { PERMISSIONS_KEY } from '../decorators/permissions.decorator';
 import { CacheService } from '../services/cache.service';
-import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(
-    private readonly reflector: Reflector,
-    private readonly prisma: PrismaService,
-    private readonly cache: CacheService,
+    private reflector: Reflector,
+    private prisma: PrismaService,
+    private cache: CacheService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -18,19 +18,22 @@ export class PermissionsGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    // If route doesn't require specific permissions, allow
-    if (!requiredPermissions || requiredPermissions.length === 0) return true;
+    if (!requiredPermissions) {
+      return true;
+    }
 
     const req = context.switchToHttp().getRequest();
     const user = req.user as { id?: string; userId?: string } | undefined;
     const userId = user?.userId || user?.id;
-    if (!userId) return false;
+    if (!userId) {
+      return false;
+    }
 
-    // Load permissions with caching
-    const perms = await this.cache.getOrSet<string[]>(
-      `user:perms:${userId}`,
+    // Get user permissions with caching
+    const permissions = await this.cache.getOrSet<string[]>(
+      `user:permissions:${userId}`,
       async () => {
-        const dbUser = await this.prisma.user.findUnique({
+        const userWithPermissions = await this.prisma.user.findUnique({
           where: { id: userId },
           select: {
             roles: {
@@ -38,7 +41,11 @@ export class PermissionsGuard implements CanActivate {
                 role: {
                   select: {
                     rolePermissions: {
-                      select: { permissions: { select: { name: true } } },
+                      select: {
+                        permissions: {
+                          select: { name: true },
+                        },
+                      },
                     },
                   },
                 },
@@ -46,20 +53,20 @@ export class PermissionsGuard implements CanActivate {
             },
           },
         });
-        if (!dbUser) return [];
-        const set = new Set<string>();
-        for (const ur of dbUser.roles) {
-          for (const rp of ur.role.rolePermissions)
-            set.add(rp.permissions.name);
-        }
-        return Array.from(set);
+        if (!userWithPermissions) return [];
+
+        const permissionNames = userWithPermissions.roles.flatMap((ur) =>
+          ur.role.rolePermissions.map((rp) => rp.permissions.name),
+        );
+
+        return [...new Set(permissionNames)];
       },
       60, // TTL seconds
     );
 
-    const userPermissions = new Set<string>(perms);
-
-    // Strict mode: require ALL listed permissions
-    return requiredPermissions.every((p) => userPermissions.has(p));
+    const userPermissions = permissions;
+    return requiredPermissions.some((permission) =>
+      userPermissions.includes(permission),
+    );
   }
 }

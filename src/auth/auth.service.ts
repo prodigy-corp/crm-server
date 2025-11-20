@@ -582,13 +582,23 @@ export class AuthService {
     });
 
     const ADMIN = user.roles.find((role) => role.role.name === 'ADMIN');
+    const SUPER_ADMIN = user.roles.find(
+      (role) => role.role.name === 'SUPER_ADMIN',
+    );
+    const EMPLOYEE = user.roles.find(
+      (role) => role.role.name === 'EMPLOYEE' || role.role.name === 'employee',
+    );
+    const CLIENT = user.roles.find((role) => role.role.name === 'CLIENT');
     const USER = user.roles.find((role) => role.role.name === 'USER');
 
-    const redirect = ADMIN
-      ? '/dashboard/admin'
-      : USER && user.isEmailVerified === true
-        ? `/users/${user.id}`
-        : '/';
+    const redirect =
+      ADMIN || SUPER_ADMIN
+        ? '/admin/dashboard'
+        : EMPLOYEE || CLIENT
+          ? '/dashboard'
+          : USER && user.isEmailVerified === true
+            ? `/users/${user.id}`
+            : '/';
 
     return {
       status: true,

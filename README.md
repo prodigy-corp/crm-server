@@ -9,6 +9,7 @@ A comprehensive, production-ready NestJS backend with authentication, authorizat
 - 📧 **Email & Notifications** - Nodemailer, BullMQ queues, WebSocket real-time updates
 - 🗄️ **Database Ready** - Prisma ORM with PostgreSQL, migrations, seeding, soft deletes
 - 👥 **RBAC System** - Role-based and permission-based access control
+- ⏰ **Automated Cronjobs** - Attendance tracking, salary generation, reports (10 scheduled tasks)
 - 📊 **Analytics & Tracking** - Google Analytics 4, Facebook Pixel, server-side event tracking
 - 📈 **Monitoring** - Pino logger, Sentry error tracking, health checks
 - 🐳 **DevOps Ready** - Docker, Kubernetes configs, CI/CD workflows
@@ -108,6 +109,8 @@ kubectl logs -f deployment/nestjs-app
 
 - **Detailed Guide**: See [README.DEV.md](./README.DEV.md) for comprehensive documentation
 - **Analytics Setup**: See [ANALYTICS_SETUP.md](./ANALYTICS_SETUP.md) for tracking configuration
+- **Cronjob Documentation**: See [CRONJOB_DOCUMENTATION.md](./CRONJOB_DOCUMENTATION.md) for automated tasks
+- **Cronjob Summary**: See [CRONJOB_SUMMARY.md](./CRONJOB_SUMMARY.md) for quick reference
 - **API Documentation**: Available at `/api/docs` when running in development
 - **NestJS Docs**: [https://docs.nestjs.com](https://docs.nestjs.com)
 - **Prisma Docs**: [https://www.prisma.io/docs](https://www.prisma.io/docs)
@@ -120,6 +123,7 @@ src/
 ├── auth/              # Authentication & authorization
 ├── common/            # Shared utilities, guards, interceptors
 ├── config/            # Environment configuration
+├── cron/              # Automated scheduled tasks (cronjobs)
 ├── email/             # Email service with templates
 ├── health/            # Health check endpoints
 ├── notification/      # WebSocket notifications
