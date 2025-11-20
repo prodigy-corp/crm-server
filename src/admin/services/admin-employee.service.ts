@@ -70,7 +70,7 @@ export class AdminEmployeeService {
       roles: {
         some: {
           role: {
-            name: 'employee',
+            name: { in: ['employee', 'EMPLOYEE'] },
           },
         },
       },
@@ -188,8 +188,8 @@ export class AdminEmployeeService {
       }
 
       // Check if user has employee role
-      const hasEmployeeRole = user.roles.some(
-        (ur) => ur.role.name === 'employee',
+      const hasEmployeeRole = user.roles.some((ur) =>
+        ['EMPLOYEE'].includes(ur.role.name),
       );
 
       // If user doesn't have employee role, auto-assign it
@@ -199,7 +199,7 @@ export class AdminEmployeeService {
         );
 
         const employeeRole = await this.prisma.role.findUnique({
-          where: { name: 'employee' },
+          where: { name: 'EMPLOYEE' },
         });
 
         if (!employeeRole) {
@@ -260,6 +260,8 @@ export class AdminEmployeeService {
         honorsSubject: dto.honorsSubject,
         honorsResult: dto.honorsResult,
         status: dto.status ?? EmployeeStatus.ACTIVE,
+        departmentId: dto.departmentId,
+        shiftId: dto.shiftId,
       },
     });
 
@@ -294,7 +296,7 @@ export class AdminEmployeeService {
 
       // ✅ FIX: Check if user has employee role
       const hasEmployeeRole = user.roles.some(
-        (ur) => ur.role.name === 'employee',
+        (ur) => ur.role.name === 'EMPLOYEE',
       );
 
       // If user doesn't have employee role, auto-assign it
@@ -304,7 +306,7 @@ export class AdminEmployeeService {
         );
 
         const employeeRole = await this.prisma.role.findUnique({
-          where: { name: 'employee' },
+          where: { name: 'EMPLOYEE' },
         });
 
         if (!employeeRole) {
@@ -350,6 +352,14 @@ export class AdminEmployeeService {
 
     if (dto.resignDate) {
       data.resignDate = new Date(dto.resignDate);
+    }
+
+    if (dto.departmentId) {
+      data.departmentId = dto.departmentId;
+    }
+
+    if (dto.shiftId) {
+      data.shiftId = dto.shiftId;
     }
 
     const updated = await this.prisma.employee.update({

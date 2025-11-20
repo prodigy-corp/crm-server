@@ -40,7 +40,7 @@ import {
 @ApiBearerAuth('JWT-auth')
 @Controller('employee')
 @UseGuards(JwtAuthGuard, RolesGuard, PermissionsGuard)
-@Roles('EMPLOYEE')
+@Roles('EMPLOYEE', 'employee')
 export class EmployeeController {
   constructor(private readonly employeeService: EmployeeService) {}
 

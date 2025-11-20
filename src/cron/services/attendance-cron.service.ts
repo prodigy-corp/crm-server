@@ -13,6 +13,7 @@ export class AttendanceCronService {
    * Auto-mark absent employees
    * Runs every day at 11:59 PM
    * Marks all active employees who haven't checked in as ABSENT
+   * Respects shift schedules: skips employees on off days
    */
   @Cron('59 23 * * *', {
     name: 'auto-mark-absent',
@@ -23,8 +24,9 @@ export class AttendanceCronService {
 
     try {
       const today = this.getStartOfDay(new Date());
+      const dayOfWeek = today.getDay(); // 0=Sunday, 1=Monday, ..., 6=Saturday
 
-      // Get all active employees
+      // Get all active employees with their shifts
       const activeEmployees = await this.prisma.employee.findMany({
         where: {
           status: EmployeeStatus.ACTIVE,
@@ -34,6 +36,20 @@ export class AttendanceCronService {
           id: true,
           name: true,
           employeeCode: true,
+          shift: {
+            include: {
+              schedules: true,
+            },
+          },
+          department: {
+            include: {
+              defaultShift: {
+                include: {
+                  schedules: true,
+                },
+              },
+            },
+          },
         },
       });
 
@@ -56,22 +72,49 @@ export class AttendanceCronService {
         todayAttendanceRecords.map((record) => record.employeeId),
       );
 
-      // Filter employees who don't have attendance records
-      const employeesWithoutAttendance = activeEmployees.filter(
-        (employee) => !employeesWithAttendance.has(employee.id),
-      );
+      // Filter employees based on shift schedule
+      const employeesToMark = [];
 
-      if (employeesWithoutAttendance.length === 0) {
-        this.logger.log('All employees have attendance records for today');
+      for (const employee of activeEmployees) {
+        // Skip if employee already has attendance record
+        if (employeesWithAttendance.has(employee.id)) {
+          continue;
+        }
+
+        // Get effective shift (employee's shift or department's default shift)
+        const effectiveShift =
+          employee.shift || employee.department?.defaultShift;
+
+        // If no shift assigned, mark as absent
+        if (!effectiveShift) {
+          employeesToMark.push(employee);
+          continue;
+        }
+
+        // Check if today is an off day for this employee's shift
+        const todaySchedule = effectiveShift.schedules?.find(
+          (s) => s.dayOfWeek === dayOfWeek,
+        );
+
+        // If today is an off day, skip this employee
+        if (todaySchedule?.isOffDay) {
+          this.logger.log(`Skipping ${employee.name} - today is an off day`);
+          continue;
+        }
+
+        // Mark as absent (including half days - they should still check in)
+        employeesToMark.push(employee);
+      }
+
+      if (employeesToMark.length === 0) {
+        this.logger.log('No employees to mark as absent');
         return;
       }
 
-      this.logger.log(
-        `Marking ${employeesWithoutAttendance.length} employees as ABSENT`,
-      );
+      this.logger.log(`Marking ${employeesToMark.length} employees as ABSENT`);
 
-      // Create ABSENT records for employees without attendance
-      const absentRecords = employeesWithoutAttendance.map((employee) => ({
+      // Create ABSENT records for employees
+      const absentRecords = employeesToMark.map((employee) => ({
         employeeId: employee.id,
         date: today,
         status: AttendanceStatus.ABSENT,
@@ -87,7 +130,7 @@ export class AttendanceCronService {
       });
 
       this.logger.log(
-        `Successfully marked ${employeesWithoutAttendance.length} employees as ABSENT`,
+        `Successfully marked ${employeesToMark.length} employees as ABSENT`,
       );
     } catch (error) {
       this.logger.error(

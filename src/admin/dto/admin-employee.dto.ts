@@ -216,6 +216,16 @@ export class CreateAdminEmployeeDto {
   @IsOptional()
   @IsString()
   userId?: string;
+
+  @ApiPropertyOptional({ example: 'uuid-of-department' })
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
+
+  @ApiPropertyOptional({ example: 'uuid-of-shift' })
+  @IsOptional()
+  @IsString()
+  shiftId?: string;
 }
 
 export class UpdateAdminEmployeeDto {
@@ -423,6 +433,16 @@ export class UpdateAdminEmployeeDto {
   @IsOptional()
   @IsString()
   userId?: string;
+
+  @ApiPropertyOptional({ example: 'uuid-of-department' })
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
+
+  @ApiPropertyOptional({ example: 'uuid-of-shift' })
+  @IsOptional()
+  @IsString()
+  shiftId?: string;
 }
 
 export class AdminEmployeeQueryDto {

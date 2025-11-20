@@ -18,6 +18,8 @@ import { AnalyticsModule } from './analytics/analytics.module';
 import { CmsModule } from './cms/cms.module';
 import { EmployeeModule } from './employee/employee.module';
 import { CronModule } from './cron/cron.module';
+import { DepartmentModule } from './department/department.module';
+import { ShiftModule } from './shift/shift.module';
 import { BullModule } from '@nestjs/bullmq';
 import { redisConfig } from './config/redis.config';
 import { QUEUES } from './queues/queue.constants';
@@ -104,6 +106,8 @@ import { QUEUES } from './queues/queue.constants';
     CmsModule,
     EmployeeModule,
     CronModule,
+    DepartmentModule,
+    ShiftModule,
   ],
   controllers: [AppController],
   providers: [

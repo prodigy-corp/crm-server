@@ -308,6 +308,74 @@ async function main() {
       },
     }),
 
+    // ==================== ADMIN - DEPARTMENT MANAGEMENT ====================
+    prisma.permission.upsert({
+      where: { name: 'admin.departments.view' },
+      update: {},
+      create: {
+        name: 'admin.departments.view',
+        description: 'View departments list',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'admin.departments.create' },
+      update: {},
+      create: {
+        name: 'admin.departments.create',
+        description: 'Create new departments',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'admin.departments.update' },
+      update: {},
+      create: {
+        name: 'admin.departments.update',
+        description: 'Update department information',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'admin.departments.delete' },
+      update: {},
+      create: {
+        name: 'admin.departments.delete',
+        description: 'Delete departments',
+      },
+    }),
+
+    // ==================== ADMIN - SHIFT MANAGEMENT ====================
+    prisma.permission.upsert({
+      where: { name: 'admin.shifts.view' },
+      update: {},
+      create: {
+        name: 'admin.shifts.view',
+        description: 'View work shifts list',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'admin.shifts.create' },
+      update: {},
+      create: {
+        name: 'admin.shifts.create',
+        description: 'Create new work shifts',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'admin.shifts.update' },
+      update: {},
+      create: {
+        name: 'admin.shifts.update',
+        description: 'Update shift schedules',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'admin.shifts.delete' },
+      update: {},
+      create: {
+        name: 'admin.shifts.delete',
+        description: 'Delete work shifts',
+      },
+    }),
+
     // ==================== ADMIN - BLOG MANAGEMENT ====================
     prisma.permission.upsert({
       where: { name: 'admin.blog.view' },
@@ -741,6 +809,168 @@ async function main() {
   });
 
   console.log('✅ Test user created:', testUser.email);
+
+  // ==================== CREATE SAMPLE SHIFTS ====================
+  const morningShift = await prisma.shift.upsert({
+    where: { name: 'Morning Shift' },
+    update: {},
+    create: {
+      name: 'Morning Shift',
+      description: 'Standard morning shift 9 AM - 5 PM, Saturday & Sunday off',
+      startTime: '09:00',
+      endTime: '17:00',
+      lateToleranceMinutes: 15,
+      earlyDepartureToleranceMinutes: 15,
+      schedules: {
+        create: [
+          { dayOfWeek: 0, isOffDay: true, isHalfDay: false }, // Sunday - Off
+          {
+            dayOfWeek: 1,
+            startTime: '09:00',
+            endTime: '17:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Monday
+          {
+            dayOfWeek: 2,
+            startTime: '09:00',
+            endTime: '17:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Tuesday
+          {
+            dayOfWeek: 3,
+            startTime: '09:00',
+            endTime: '17:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Wednesday
+          {
+            dayOfWeek: 4,
+            startTime: '09:00',
+            endTime: '13:00',
+            isOffDay: false,
+            isHalfDay: true,
+          }, // Thursday - Half day
+          {
+            dayOfWeek: 5,
+            startTime: '09:00',
+            endTime: '17:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Friday
+          { dayOfWeek: 6, isOffDay: true, isHalfDay: false }, // Saturday - Off
+        ],
+      },
+    },
+  });
+
+  const eveningShift = await prisma.shift.upsert({
+    where: { name: 'Evening Shift' },
+    update: {},
+    create: {
+      name: 'Evening Shift',
+      description: 'Evening shift 2 PM - 10 PM, Friday off',
+      startTime: '14:00',
+      endTime: '22:00',
+      lateToleranceMinutes: 15,
+      earlyDepartureToleranceMinutes: 15,
+      schedules: {
+        create: [
+          {
+            dayOfWeek: 0,
+            startTime: '14:00',
+            endTime: '22:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Sunday
+          {
+            dayOfWeek: 1,
+            startTime: '14:00',
+            endTime: '22:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Monday
+          {
+            dayOfWeek: 2,
+            startTime: '14:00',
+            endTime: '22:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Tuesday
+          {
+            dayOfWeek: 3,
+            startTime: '14:00',
+            endTime: '22:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Wednesday
+          {
+            dayOfWeek: 4,
+            startTime: '14:00',
+            endTime: '22:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Thursday
+          { dayOfWeek: 5, isOffDay: true, isHalfDay: false }, // Friday - Off
+          {
+            dayOfWeek: 6,
+            startTime: '14:00',
+            endTime: '22:00',
+            isOffDay: false,
+            isHalfDay: false,
+          }, // Saturday
+        ],
+      },
+    },
+  });
+
+  console.log(
+    '✅ Sample shifts created:',
+    morningShift.name,
+    ',',
+    eveningShift.name,
+  );
+
+  // ==================== CREATE SAMPLE DEPARTMENTS ====================
+  const engineeringDept = await prisma.department.upsert({
+    where: { name: 'Engineering' },
+    update: {},
+    create: {
+      name: 'Engineering',
+      description: 'Software development and technical team',
+      defaultShiftId: morningShift.id,
+    },
+  });
+
+  const salesDept = await prisma.department.upsert({
+    where: { name: 'Sales & Marketing' },
+    update: {},
+    create: {
+      name: 'Sales & Marketing',
+      description: 'Sales and marketing team',
+      defaultShiftId: morningShift.id,
+    },
+  });
+
+  const supportDept = await prisma.department.upsert({
+    where: { name: 'Customer Support' },
+    update: {},
+    create: {
+      name: 'Customer Support',
+      description: '24/7 customer support team',
+      defaultShiftId: eveningShift.id,
+    },
+  });
+
+  console.log(
+    '✅ Sample departments created:',
+    engineeringDept.name,
+    ',',
+    salesDept.name,
+    ',',
+    supportDept.name,
+  );
 
   console.log('\n🎉 Seeding completed successfully!');
   console.log('\n📝 Default Credentials:');

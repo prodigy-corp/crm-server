@@ -704,58 +704,67 @@ enum SalaryPaymentStatus {
 }
 
 model Employee {
-  id                       String                    @id @default(cuid())
-  userId                   String?                   @unique
-  employeeCode             String?                   @db.VarChar(50)
-  name                     String                    @db.VarChar(150)
-  designation              String?                   @db.VarChar(100)
-  fatherName               String?                   @db.VarChar(150)
-  motherName               String?                   @db.VarChar(150)
+  id                       String         @id @default(cuid())
+  userId                   String?        @unique
+  employeeCode             String?        @db.VarChar(50)
+  name                     String         @db.VarChar(150)
+  designation              String?        @db.VarChar(100)
+  fatherName               String?        @db.VarChar(150)
+  motherName               String?        @db.VarChar(150)
   dateOfBirth              DateTime?
-  nationalId               String?                   @db.VarChar(100)
-  bloodGroup               String?                   @db.VarChar(10)
+  nationalId               String?        @db.VarChar(100)
+  bloodGroup               String?        @db.VarChar(10)
   joiningDate              DateTime
   resignDate               DateTime?
-  baseSalary               Decimal                   @db.Decimal(10, 2)
-  mobileNumber             String?                   @db.VarChar(20)
-  alternativeContactNumber String?                   @db.VarChar(20)
-  corporateContactNumber   String?                   @db.VarChar(20)
-  emailAddress             String?                   @db.VarChar(255)
-  facebookProfileLink      String?                   @db.VarChar(500)
-  bankAccountNumber        String?                   @db.VarChar(100)
-  branchName               String?                   @db.VarChar(150)
-  bankName                 String?                   @db.VarChar(150)
-  fatherContactNumber      String?                   @db.VarChar(20)
-  motherContactNumber      String?                   @db.VarChar(20)
-  emergencyContactNumber   String?                   @db.VarChar(20)
-  sscRoll                  String?                   @db.VarChar(50)
-  sscRegistrationNumber    String?                   @db.VarChar(50)
+  baseSalary               Decimal        @db.Decimal(10, 2)
+  mobileNumber             String?        @db.VarChar(20)
+  alternativeContactNumber String?        @db.VarChar(20)
+  corporateContactNumber   String?        @db.VarChar(20)
+  emailAddress             String?        @db.VarChar(255)
+  facebookProfileLink      String?        @db.VarChar(500)
+  bankAccountNumber        String?        @db.VarChar(100)
+  branchName               String?        @db.VarChar(150)
+  bankName                 String?        @db.VarChar(150)
+  fatherContactNumber      String?        @db.VarChar(20)
+  motherContactNumber      String?        @db.VarChar(20)
+  emergencyContactNumber   String?        @db.VarChar(20)
+  sscRoll                  String?        @db.VarChar(50)
+  sscRegistrationNumber    String?        @db.VarChar(50)
   sscPassingYear           Int?
-  sscBoard                 String?                   @db.VarChar(50)
-  sscResult                String?                   @db.VarChar(20)
-  hscRoll                  String?                   @db.VarChar(50)
-  hscRegistrationNumber    String?                   @db.VarChar(50)
+  sscBoard                 String?        @db.VarChar(50)
+  sscResult                String?        @db.VarChar(20)
+  hscRoll                  String?        @db.VarChar(50)
+  hscRegistrationNumber    String?        @db.VarChar(50)
   hscPassingYear           Int?
-  hscBoard                 String?                   @db.VarChar(50)
-  hscResult                String?                   @db.VarChar(20)
-  honorsRoll               String?                   @db.VarChar(50)
-  honorsRegistrationNumber String?                   @db.VarChar(50)
+  hscBoard                 String?        @db.VarChar(50)
+  hscResult                String?        @db.VarChar(20)
+  honorsRoll               String?        @db.VarChar(50)
+  honorsRegistrationNumber String?        @db.VarChar(50)
   honorsPassingYear        Int?
-  honorsInstitutionName    String?                   @db.VarChar(255)
-  honorsSubject            String?                   @db.VarChar(100)
-  honorsResult             String?                   @db.VarChar(20)
-  photoUrl                 String?                   @db.VarChar(500)
-  status                   EmployeeStatus            @default(ACTIVE)
-  createdAt                DateTime                  @default(now())
-  updatedAt                DateTime                  @updatedAt
-  deletedAt                DateTime?
-  user                     User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  attendanceRecords        EmployeeAttendance[]
-  salaryIncrements         EmployeeSalaryIncrement[]
-  salaryPayments           EmployeeSalaryPayment[]
+  honorsInstitutionName    String?        @db.VarChar(255)
+  honorsSubject            String?        @db.VarChar(100)
+  honorsResult             String?        @db.VarChar(20)
+  photoUrl                 String?        @db.VarChar(500)
+  status                   EmployeeStatus @default(ACTIVE)
+
+  // Shift & Department
+  departmentId String?
+  department   Department? @relation(fields: [departmentId], references: [id], onDelete: SetNull)
+  shiftId      String?
+  shift        Shift?      @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+
+  createdAt         DateTime                  @default(now())
+  updatedAt         DateTime                  @updatedAt
+  deletedAt         DateTime?
+  user              User?                     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  attendanceRecords EmployeeAttendance[]
+  salaryIncrements  EmployeeSalaryIncrement[]
+  salaryPayments    EmployeeSalaryPayment[]
 
   @@index([name])
   @@index([status])
+  @@index([departmentId])
+  @@index([shiftId])
   @@index([createdAt])
   @@index([deletedAt])
   @@map("employees")
@@ -817,6 +826,66 @@ model EmployeeSalaryPayment {
   @@index([employeeId])
   @@index([status])
   @@map("employee_salary_payments")
+}
+
+// ==================== Shift & Department Management ====================
+
+model Department {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  // Default shift for the department
+  defaultShiftId String?
+  defaultShift   Shift?  @relation(fields: [defaultShiftId], references: [id], onDelete: SetNull)
+
+  employees Employee[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("departments")
+}
+
+model Shift {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  // Default timings
+  startTime String @default("09:00") // HH:mm
+  endTime   String @default("17:00") // HH:mm
+
+  // Tolerances
+  lateToleranceMinutes           Int @default(15)
+  earlyDepartureToleranceMinutes Int @default(15)
+
+  // Relations
+  schedules   ShiftSchedule[]
+  employees   Employee[]
+  departments Department[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("shifts")
+}
+
+model ShiftSchedule {
+  id        String @id @default(cuid())
+  shiftId   String
+  dayOfWeek Int // 0=Sunday, 1=Monday, ..., 6=Saturday
+
+  startTime String? // Override default start time
+  endTime   String? // Override default end time
+
+  isOffDay  Boolean @default(false)
+  isHalfDay Boolean @default(false)
+
+  shift Shift @relation(fields: [shiftId], references: [id], onDelete: Cascade)
+
+  @@unique([shiftId, dayOfWeek])
+  @@map("shift_schedules")
 }
 
 // ==================== Client Management ====================

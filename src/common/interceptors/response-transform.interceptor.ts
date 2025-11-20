@@ -40,14 +40,18 @@ export class ResponseTransformInterceptor<T>
 
     return next.handle().pipe(
       map((data) => {
-        // If data already has a status field, it might be a custom response
+        // If data already has a status or success field, it might be a custom response
         // Preserve it while ensuring standard structure
-        if (data && typeof data === 'object' && 'status' in data) {
+        if (
+          data &&
+          typeof data === 'object' &&
+          ('status' in data || 'success' in data)
+        ) {
           return {
-            success: data.status === true,
+            success: data.status === true || data.success === true,
             statusCode: response.statusCode,
             message: data.message || 'Success',
-            data: data.data || data,
+            data: data.data !== undefined ? data.data : data,
             timestamp: new Date().toISOString(),
             path: request.url,
           };
