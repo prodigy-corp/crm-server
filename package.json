@@ -27,6 +27,9 @@
     "prepare": "husky || true",
     "typecheck": "tsc --noEmit"
   },
+  "prisma": {
+    "seed": "ts-node --project tsconfig.json --transpile-only prisma/seed.ts"
+  },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.930.0",
     "@aws-sdk/s3-request-presigner": "^3.930.0",
