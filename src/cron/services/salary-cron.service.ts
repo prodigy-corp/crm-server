@@ -101,7 +101,17 @@ export class SalaryCronService {
       );
 
       // Calculate salary for each employee
-      const salaryPayments = [];
+      const salaryPayments: Array<{
+        employeeId: string;
+        month: number;
+        year: number;
+        basicSalary: Decimal;
+        grossSalary: Decimal;
+        totalDeduction: Decimal;
+        netPayable: Decimal;
+        paymentDate: null;
+        status: SalaryPaymentStatus;
+      }> = [];
 
       for (const employee of employeesNeedingSalary) {
         // Get current salary (base salary or latest increment)
@@ -263,7 +273,15 @@ export class SalaryCronService {
         },
       });
 
-      const recommendations = [];
+      const recommendations: Array<{
+        employeeId: string;
+        employeeName: string;
+        currentSalary: number;
+        recommendedIncrement: number;
+        newSalary: number;
+        attendanceScore: string;
+        reason: string;
+      }> = [];
 
       for (const employee of employees) {
         // Skip if received increment in last 6 months

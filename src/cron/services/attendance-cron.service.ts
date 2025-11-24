@@ -73,11 +73,49 @@ export class AttendanceCronService {
       );
 
       // Filter employees based on shift schedule
-      const employeesToMark = [];
+      const employeesToMark: Array<{
+        id: string;
+        name: string;
+        employeeCode: string;
+        shift: {
+          id: string;
+          schedules: Array<{
+            id: string;
+            shiftId: string;
+            startTime: string | null;
+            endTime: string | null;
+            dayOfWeek: number;
+            isOffDay: boolean;
+            isHalfDay: boolean;
+          }>;
+        } | null;
+        department: {
+          defaultShift: {
+            id: string;
+            schedules: Array<{
+              id: string;
+              shiftId: string;
+              startTime: string | null;
+              endTime: string | null;
+              dayOfWeek: number;
+              isOffDay: boolean;
+              isHalfDay: boolean;
+            }>;
+          } | null;
+        } | null;
+      }> = [];
 
       for (const employee of activeEmployees) {
         // Skip if employee already has attendance record
         if (employeesWithAttendance.has(employee.id)) {
+          continue;
+        }
+
+        // Skip employees without valid employee code
+        if (!employee.employeeCode) {
+          this.logger.warn(
+            `Skipping ${employee.name} - no employee code assigned`,
+          );
           continue;
         }
 
@@ -87,7 +125,10 @@ export class AttendanceCronService {
 
         // If no shift assigned, mark as absent
         if (!effectiveShift) {
-          employeesToMark.push(employee);
+          employeesToMark.push({
+            ...employee,
+            employeeCode: employee.employeeCode, // Safe assertion after null check
+          });
           continue;
         }
 
@@ -103,7 +144,10 @@ export class AttendanceCronService {
         }
 
         // Mark as absent (including half days - they should still check in)
-        employeesToMark.push(employee);
+        employeesToMark.push({
+          ...employee,
+          employeeCode: employee.employeeCode, // Safe assertion after null check
+        });
       }
 
       if (employeesToMark.length === 0) {

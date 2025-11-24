@@ -432,7 +432,14 @@ export class SeoService {
       },
     });
 
-    const analyses = [];
+    const analyses: Array<{
+      blogId: string;
+      title: string;
+      slug: string;
+      seoScore: number;
+      issues: number;
+      hasIssues: boolean;
+    }> = [];
 
     for (const blog of blogs) {
       try {
