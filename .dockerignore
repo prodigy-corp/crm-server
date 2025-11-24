@@ -45,5 +45,3 @@ LICENSE
 .prettierrc
 .eslintrc.js
 eslint.config.mjs
-tsconfig.json
-nest-cli.json
