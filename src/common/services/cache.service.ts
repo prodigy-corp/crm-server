@@ -9,16 +9,35 @@ export class CacheService {
   private readonly defaultTTL = 3600; // 1 hour
 
   constructor(private configService: ConfigService) {
+    const isCloudRedis =
+      this.configService.get('REDIS_HOST', 'localhost') !== 'localhost' &&
+      !this.configService.get('REDIS_HOST', 'localhost').includes('127.0.0.1');
+
     this.redis = new Redis({
       host: this.configService.get('REDIS_HOST', 'localhost'),
       port: this.configService.get('REDIS_PORT', 6379),
+      username: this.configService.get('REDIS_USERNAME'),
       password: this.configService.get('REDIS_PASSWORD'),
+      // Enable TLS for cloud Redis
+      tls: isCloudRedis ? {} : undefined,
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => Math.min(times * 50, 2000),
+      enableReadyCheck: true,
+      enableOfflineQueue: true,
+      connectTimeout: 10000,
+      keepAlive: 30000,
     });
 
     this.redis.on('error', (error) => {
-      this.logger.error('Redis connection error:', error);
+      this.logger.error('Redis connection error:', error.message);
+    });
+
+    this.redis.on('connect', () => {
+      this.logger.log('Redis connected successfully');
+    });
+
+    this.redis.on('ready', () => {
+      this.logger.log('Redis is ready to accept commands');
     });
   }
 
