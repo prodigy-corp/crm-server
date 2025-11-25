@@ -16,7 +16,11 @@ export const redisConfig: RedisOptions = {
   password: process.env.REDIS_PASSWORD,
   port: process.env.REDIS_PORT ? parseInt(process.env.REDIS_PORT) : 6379,
   // Enable TLS for cloud Redis instances
-  tls: isCloudRedis ? {} : undefined,
+  tls: isCloudRedis
+    ? {
+        rejectUnauthorized: false, // Accept self-signed certificates
+      }
+    : undefined,
   maxRetriesPerRequest: 3,
   retryStrategy: (times) => {
     const delay = Math.min(times * 50, 2000);

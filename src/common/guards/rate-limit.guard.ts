@@ -31,7 +31,11 @@ export class RateLimitGuard implements CanActivate {
       port: this.configService.get('REDIS_PORT', 6379),
       username: this.configService.get('REDIS_USERNAME'),
       password: this.configService.get('REDIS_PASSWORD'),
-      tls: isCloudRedis ? {} : undefined,
+      tls: isCloudRedis
+        ? {
+            rejectUnauthorized: false, // Accept self-signed certificates
+          }
+        : undefined,
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => Math.min(times * 50, 2000),
       enableReadyCheck: true,

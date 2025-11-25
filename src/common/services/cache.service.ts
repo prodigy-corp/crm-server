@@ -19,7 +19,11 @@ export class CacheService {
       username: this.configService.get('REDIS_USERNAME'),
       password: this.configService.get('REDIS_PASSWORD'),
       // Enable TLS for cloud Redis
-      tls: isCloudRedis ? {} : undefined,
+      tls: isCloudRedis
+        ? {
+            rejectUnauthorized: false, // Accept self-signed certificates
+          }
+        : undefined,
       maxRetriesPerRequest: 3,
       retryStrategy: (times) => Math.min(times * 50, 2000),
       enableReadyCheck: true,
