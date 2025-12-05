@@ -603,6 +603,40 @@ async function main() {
         description: 'Legacy: Read blog posts',
       },
     }),
+
+    // ==================== MESSAGE MODULE ====================
+    prisma.permission.upsert({
+      where: { name: 'message.read' },
+      update: {},
+      create: {
+        name: 'message.read',
+        description: 'View messages and conversations',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'message.send' },
+      update: {},
+      create: {
+        name: 'message.send',
+        description: 'Send messages',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'message.initiate' },
+      update: {},
+      create: {
+        name: 'message.initiate',
+        description: 'Start new conversations',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'message.delete' },
+      update: {},
+      create: {
+        name: 'message.delete',
+        description: 'Delete messages and conversations',
+      },
+    }),
   ]);
 
   console.log(
@@ -641,7 +675,8 @@ async function main() {
       p.name.startsWith('blog.') ||
       p.name.startsWith('roles:') ||
       p.name.startsWith('permissions:') ||
-      p.name.startsWith('dashboard:'),
+      p.name.startsWith('dashboard:') ||
+      p.name.startsWith('message.'),
   );
 
   if (adminRole) {
@@ -665,8 +700,8 @@ async function main() {
 
   // Assign permissions to EMPLOYEE role
   const employeeRole = roles.find((r) => r.name === 'EMPLOYEE');
-  const employeePermissions = permissions.filter((p) =>
-    p.name.startsWith('employee.'),
+  const employeePermissions = permissions.filter(
+    (p) => p.name.startsWith('employee.') || p.name.startsWith('message.'),
   );
 
   if (employeeRole) {
@@ -690,8 +725,8 @@ async function main() {
 
   // Assign permissions to CLIENT role
   const clientRole = roles.find((r) => r.name === 'CLIENT');
-  const clientPermissions = permissions.filter((p) =>
-    p.name.startsWith('client.'),
+  const clientPermissions = permissions.filter(
+    (p) => p.name.startsWith('client.') || p.name.startsWith('message.'),
   );
 
   if (clientRole) {
