@@ -62,6 +62,12 @@ model User {
   // Client relation (one-to-one) - inverse side
   client Client?
 
+  // Message relations
+  sentMessageRooms     MessageRoom[] @relation("MessageRoomSender")
+  receivedMessageRooms MessageRoom[] @relation("MessageRoomReceiver")
+  sentMessages         Message[]     @relation("MessageSender")
+  receivedMessages     Message[]     @relation("MessageReceiver")
+
   // Indexes
   @@index([email])
   @@index([status])
@@ -952,4 +958,55 @@ model Client {
   @@index([createdAt])
   @@index([deletedAt])
   @@map("clients")
+}
+
+model MessageRoom {
+  id         String    @id @default(ulid())
+  sender     User      @relation("MessageRoomSender", fields: [senderId], references: [id])
+  senderId   String
+  receiver   User      @relation("MessageRoomReceiver", fields: [receiverId], references: [id])
+  receiverId String
+  bookingId  String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  messages   Message[]
+  eventId    String?
+
+  @@unique([senderId, receiverId, bookingId], name: "unique_message_room")
+  @@index([createdAt])
+  @@index([bookingId])
+  @@index([receiverId])
+  @@index([senderId])
+  @@map("message_rooms")
+}
+
+model Message {
+  id       String      @id @default(ulid())
+  room     MessageRoom @relation(fields: [roomId], references: [id])
+  roomId   String
+  sender   User        @relation("MessageSender", fields: [senderId], references: [id])
+  senderId String
+  receiver User        @relation("MessageReceiver", fields: [receiverId], references: [id])
+
+  receiverId String
+  message    String
+  attachment String?
+  type       MessageType @default(TEXT)
+  sentAt     DateTime    @default(now())
+  isRead     Boolean     @default(false)
+
+  @@index([isRead])
+  @@index([sentAt])
+  @@index([receiverId])
+  @@index([senderId])
+  @@index([roomId])
+  @@map("messages")
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
 }

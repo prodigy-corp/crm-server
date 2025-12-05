@@ -23,6 +23,7 @@ import { ShiftModule } from './shift/shift.module';
 import { BullModule } from '@nestjs/bullmq';
 import { redisConfig } from './config/redis.config';
 import { QUEUES } from './queues/queue.constants';
+import { MessageModule } from './message/message.module';
 
 @Module({
   imports: [
@@ -108,6 +109,7 @@ import { QUEUES } from './queues/queue.constants';
     CronModule,
     DepartmentModule,
     ShiftModule,
+    MessageModule,
   ],
   controllers: [AppController],
   providers: [
