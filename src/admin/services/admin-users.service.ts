@@ -175,6 +175,13 @@ export class AdminUsersService {
         ...userData,
         email,
         password: hashedPassword,
+        accounts: {
+          create: {
+            provider: 'credentials',
+            type: 'credentials',
+          },
+        },
+
         roles: {
           create: roles.map((roleName) => ({
             role: {
