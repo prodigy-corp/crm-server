@@ -256,6 +256,12 @@ export class AdminUsersService {
               },
             })),
           },
+          accounts: {
+            create: {
+              provider: 'credentials',
+              type: 'credentials',
+            },
+          },
         }),
       },
       select: {
