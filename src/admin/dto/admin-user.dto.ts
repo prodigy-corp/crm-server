@@ -111,3 +111,9 @@ export class AdminUserQueryDto {
   @IsString()
   sortOrder?: 'asc' | 'desc';
 }
+
+export class ChangePasswordDto {
+  @ApiProperty({ example: 'NewSecurePassword123!' })
+  @IsString()
+  password!: string;
+}

@@ -26,6 +26,7 @@ import {
   CreateAdminUserDto,
   UpdateAdminUserDto,
   AdminUserQueryDto,
+  ChangePasswordDto,
 } from '../dto/admin-user.dto';
 
 @ApiTags('Admin - Users')
@@ -161,5 +162,19 @@ export class AdminUsersController {
   @ApiParam({ name: 'id', type: String })
   async getUserLoginHistory(@Param('id') id: string) {
     return this.adminUsersService.getUserLoginHistory(id);
+  }
+
+  @Put(':id/change-password')
+  @ApiOperation({ summary: 'Change user password' })
+  @ApiResponse({
+    status: HttpStatus.OK,
+    description: 'User password changed successfully',
+  })
+  @ApiParam({ name: 'id', type: String })
+  async changeUserPassword(
+    @Param('id') id: string,
+    @Body() changePasswordDto: ChangePasswordDto,
+  ) {
+    return this.adminUsersService.changePassword(id, changePasswordDto);
   }
 }

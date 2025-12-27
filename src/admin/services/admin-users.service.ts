@@ -419,4 +419,27 @@ export class AdminUsersService {
       loginHistory,
     };
   }
+
+  async changePassword(id: string, changePasswordDto: { password: string }) {
+    const { password } = changePasswordDto;
+
+    const user = await this.prisma.user.findFirst({
+      where: { id, deletedAt: null },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 12);
+
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        password: hashedPassword,
+      },
+    });
+
+    return { message: 'Password changed successfully' };
+  }
 }
