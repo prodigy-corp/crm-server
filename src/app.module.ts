@@ -26,7 +26,7 @@ import { QUEUES } from './queues/queue.constants';
 import { MessageModule } from './message/message.module';
 import { ProjectModule } from './project/project.module';
 import { TaskModule } from './task/task.module';
-import { ProductivityModule } from './productivity/productivity.module';
+import { PerformanceModule } from './performance/performance.module';
 
 @Module({
   imports: [
@@ -116,6 +116,7 @@ import { ProductivityModule } from './productivity/productivity.module';
     ProjectModule,
     TaskModule,
     ProductivityModule,
+    PerformanceModule,
   ],
   controllers: [AppController],
   providers: [

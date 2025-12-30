@@ -703,6 +703,39 @@ async function main() {
         description: 'Delete tasks',
       },
     }),
+    // ==================== PERFORMANCE MANAGEMENT ====================
+    prisma.permission.upsert({
+      where: { name: 'performance.read' },
+      update: {},
+      create: {
+        name: 'performance.read',
+        description: 'View performance data (KPIs, Goals, Reviews)',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'performance.create' },
+      update: {},
+      create: {
+        name: 'performance.create',
+        description: 'Create performance records',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'performance.update' },
+      update: {},
+      create: {
+        name: 'performance.update',
+        description: 'Update performance records',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'performance.delete' },
+      update: {},
+      create: {
+        name: 'performance.delete',
+        description: 'Delete performance records',
+      },
+    }),
   ]);
 
   console.log(
@@ -744,7 +777,8 @@ async function main() {
       p.name.startsWith('dashboard:') ||
       p.name.startsWith('message.') ||
       p.name.startsWith('projects.') ||
-      p.name.startsWith('tasks.'),
+      p.name.startsWith('tasks.') ||
+      p.name.startsWith('performance.'),
   );
 
   if (adminRole) {
@@ -773,7 +807,8 @@ async function main() {
       p.name.startsWith('employee.') ||
       p.name.startsWith('message.') ||
       p.name === 'projects.read' ||
-      p.name.startsWith('tasks.'),
+      p.name.startsWith('tasks.') ||
+      p.name.startsWith('performance.'),
   );
 
   if (employeeRole) {
