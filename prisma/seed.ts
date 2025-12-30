@@ -785,6 +785,39 @@ async function main() {
         description: 'Process asset returns',
       },
     }),
+    // ==================== ANNOUNCEMENTS ====================
+    prisma.permission.upsert({
+      where: { name: 'announcement.read' },
+      update: {},
+      create: {
+        name: 'announcement.read',
+        description: 'View announcements',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'announcement.create' },
+      update: {},
+      create: {
+        name: 'announcement.create',
+        description: 'Create broadcast announcements',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'announcement.update' },
+      update: {},
+      create: {
+        name: 'announcement.update',
+        description: 'Update announcements',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'announcement.delete' },
+      update: {},
+      create: {
+        name: 'announcement.delete',
+        description: 'Delete announcements',
+      },
+    }),
   ]);
 
   console.log(

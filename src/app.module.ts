@@ -29,6 +29,7 @@ import { TaskModule } from './task/task.module';
 import { PerformanceModule } from './performance/performance.module';
 import { ProductivityModule } from './productivity/productivity.module';
 import { AssetsModule } from './assets/assets.module';
+import { AnnouncementsModule } from './announcements/announcements.module';
 
 @Module({
   imports: [
@@ -120,6 +121,7 @@ import { AssetsModule } from './assets/assets.module';
     ProductivityModule,
     PerformanceModule,
     AssetsModule,
+    AnnouncementsModule,
   ],
   controllers: [AppController],
   providers: [
