@@ -67,6 +67,7 @@ model User {
   receivedMessageRooms MessageRoom[] @relation("MessageRoomReceiver")
   sentMessages         Message[]     @relation("MessageSender")
   receivedMessages     Message[]     @relation("MessageReceiver")
+  createdTasks         Task[]        @relation("TaskCreator")
 
   // Indexes
   @@index([email])
@@ -766,6 +767,8 @@ model Employee {
   attendanceRecords EmployeeAttendance[]
   salaryIncrements  EmployeeSalaryIncrement[]
   salaryPayments    EmployeeSalaryPayment[]
+  managedProjects   Project[]                 @relation("ProjectManager")
+  assignedTasks     Task[]                    @relation("TaskAssignee")
 
   @@index([name])
   @@index([status])
@@ -949,7 +952,8 @@ model Client {
   deletedAt DateTime?
 
   // Relations
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+  user     User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  projects Project[]
 
   @@index([name])
   @@index([status])
@@ -1009,4 +1013,87 @@ enum MessageType {
   VIDEO
   AUDIO
   FILE
+}
+
+// ==================== Project & Task Management ====================
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  REVIEW
+  COMPLETED
+  CANCELLED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  name        String        @db.VarChar(200)
+  description String?       @db.Text
+  status      ProjectStatus @default(PLANNED)
+  startDate   DateTime?
+  endDate     DateTime?
+
+  // Relations
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  managerId String?
+  manager   Employee? @relation("ProjectManager", fields: [managerId], references: [id], onDelete: SetNull)
+
+  tasks Task[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([name])
+  @@index([status])
+  @@index([managerId])
+  @@index([clientId])
+  @@map("projects")
+}
+
+model Task {
+  id          String     @id @default(cuid())
+  title       String     @db.VarChar(255)
+  description String?    @db.Text
+  status      TaskStatus @default(TODO)
+  priority    Priority   @default(MEDIUM)
+  dueDate     DateTime?
+
+  // Relations
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  assigneeId String?
+  assignee   Employee? @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  creatorId String?
+  creator   User?   @relation("TaskCreator", fields: [creatorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  @@index([title])
+  @@index([status])
+  @@index([priority])
+  @@index([projectId])
+  @@index([assigneeId])
+  @@map("tasks")
 }

@@ -637,6 +637,72 @@ async function main() {
         description: 'Delete messages and conversations',
       },
     }),
+    // ==================== PROJECT MANAGEMENT ====================
+    prisma.permission.upsert({
+      where: { name: 'projects.create' },
+      update: {},
+      create: {
+        name: 'projects.create',
+        description: 'Create new projects',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'projects.read' },
+      update: {},
+      create: {
+        name: 'projects.read',
+        description: 'View projects',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'projects.update' },
+      update: {},
+      create: {
+        name: 'projects.update',
+        description: 'Update project details',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'projects.delete' },
+      update: {},
+      create: {
+        name: 'projects.delete',
+        description: 'Delete projects',
+      },
+    }),
+    // ==================== TASK MANAGEMENT ====================
+    prisma.permission.upsert({
+      where: { name: 'tasks.create' },
+      update: {},
+      create: {
+        name: 'tasks.create',
+        description: 'Create new tasks',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'tasks.read' },
+      update: {},
+      create: {
+        name: 'tasks.read',
+        description: 'View tasks',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'tasks.update' },
+      update: {},
+      create: {
+        name: 'tasks.update',
+        description: 'Update task details and status',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'tasks.delete' },
+      update: {},
+      create: {
+        name: 'tasks.delete',
+        description: 'Delete tasks',
+      },
+    }),
   ]);
 
   console.log(
@@ -676,7 +742,9 @@ async function main() {
       p.name.startsWith('roles:') ||
       p.name.startsWith('permissions:') ||
       p.name.startsWith('dashboard:') ||
-      p.name.startsWith('message.'),
+      p.name.startsWith('message.') ||
+      p.name.startsWith('projects.') ||
+      p.name.startsWith('tasks.'),
   );
 
   if (adminRole) {
@@ -701,7 +769,11 @@ async function main() {
   // Assign permissions to EMPLOYEE role
   const employeeRole = roles.find((r) => r.name === 'EMPLOYEE');
   const employeePermissions = permissions.filter(
-    (p) => p.name.startsWith('employee.') || p.name.startsWith('message.'),
+    (p) =>
+      p.name.startsWith('employee.') ||
+      p.name.startsWith('message.') ||
+      p.name === 'projects.read' ||
+      p.name.startsWith('tasks.'),
   );
 
   if (employeeRole) {
@@ -726,7 +798,11 @@ async function main() {
   // Assign permissions to CLIENT role
   const clientRole = roles.find((r) => r.name === 'CLIENT');
   const clientPermissions = permissions.filter(
-    (p) => p.name.startsWith('client.') || p.name.startsWith('message.'),
+    (p) =>
+      p.name.startsWith('client.') ||
+      p.name.startsWith('message.') ||
+      p.name === 'projects.read' ||
+      p.name === 'tasks.read',
   );
 
   if (clientRole) {
