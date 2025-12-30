@@ -27,6 +27,7 @@ import { MessageModule } from './message/message.module';
 import { ProjectModule } from './project/project.module';
 import { TaskModule } from './task/task.module';
 import { PerformanceModule } from './performance/performance.module';
+import { ProductivityModule } from './productivity/productivity.module';
 
 @Module({
   imports: [
