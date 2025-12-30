@@ -736,6 +736,55 @@ async function main() {
         description: 'Delete performance records',
       },
     }),
+    // ==================== ASSET MANAGEMENT ====================
+    prisma.permission.upsert({
+      where: { name: 'asset.read' },
+      update: {},
+      create: {
+        name: 'asset.read',
+        description: 'View asset inventory and assignments',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'asset.create' },
+      update: {},
+      create: {
+        name: 'asset.create',
+        description: 'Add new assets to inventory',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'asset.update' },
+      update: {},
+      create: {
+        name: 'asset.update',
+        description: 'Update asset details and status',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'asset.delete' },
+      update: {},
+      create: {
+        name: 'asset.delete',
+        description: 'Delete assets from inventory',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'asset.assign' },
+      update: {},
+      create: {
+        name: 'asset.assign',
+        description: 'Assign assets to employees',
+      },
+    }),
+    prisma.permission.upsert({
+      where: { name: 'asset.return' },
+      update: {},
+      create: {
+        name: 'asset.return',
+        description: 'Process asset returns',
+      },
+    }),
   ]);
 
   console.log(
@@ -778,7 +827,8 @@ async function main() {
       p.name.startsWith('message.') ||
       p.name.startsWith('projects.') ||
       p.name.startsWith('tasks.') ||
-      p.name.startsWith('performance.'),
+      p.name.startsWith('performance.') ||
+      p.name.startsWith('asset.'),
   );
 
   if (adminRole) {
@@ -808,7 +858,8 @@ async function main() {
       p.name.startsWith('message.') ||
       p.name === 'projects.read' ||
       p.name.startsWith('tasks.') ||
-      p.name.startsWith('performance.'),
+      p.name.startsWith('performance.') ||
+      p.name === 'asset.read',
   );
 
   if (employeeRole) {

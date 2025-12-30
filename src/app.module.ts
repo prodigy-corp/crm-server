@@ -28,6 +28,7 @@ import { ProjectModule } from './project/project.module';
 import { TaskModule } from './task/task.module';
 import { PerformanceModule } from './performance/performance.module';
 import { ProductivityModule } from './productivity/productivity.module';
+import { AssetsModule } from './assets/assets.module';
 
 @Module({
   imports: [
@@ -118,6 +119,7 @@ import { ProductivityModule } from './productivity/productivity.module';
     TaskModule,
     ProductivityModule,
     PerformanceModule,
+    AssetsModule,
   ],
   controllers: [AppController],
   providers: [
