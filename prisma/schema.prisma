@@ -14,7 +14,7 @@ datasource db {
 // ==================== User Management ====================
 
 model User {
-  id       String  @id @default(cuid())
+  id       String  @id @default(ulid())
   email    String  @unique
   name     String
   avatar   String?
@@ -93,7 +93,7 @@ enum UserStatus {
 // ==================== Authentication ====================
 
 model Account {
-  id                String    @id @default(cuid())
+  id                String    @id @default(ulid())
   userId            String
   type              String // oauth, credentials
   provider          String // google, facebook, credentials
@@ -118,7 +118,7 @@ model Account {
 }
 
 model UserOtp {
-  id        String   @id @default(cuid())
+  id        String   @id @default(ulid())
   email     String
   otp       String
   type      OtpType  @default(VERIFY_EMAIL)
@@ -140,7 +140,7 @@ enum OtpType {
 }
 
 model LoginHistory {
-  id        String       @id @default(cuid())
+  id        String       @id @default(ulid())
   userId    String
   attempt   LoginAttempt
   ip        String?
@@ -171,7 +171,7 @@ enum LoginAttempt {
 // ==================== RBAC (Role-Based Access Control) ====================
 
 model Role {
-  id          String  @id @default(cuid())
+  id          String  @id @default(ulid())
   name        String  @unique
   description String?
 
@@ -186,7 +186,7 @@ model Role {
 }
 
 model Permission {
-  id          String  @id @default(cuid())
+  id          String  @id @default(ulid())
   name        String  @unique // e.g., "users:read", "posts:write"
   description String?
 
@@ -200,7 +200,7 @@ model Permission {
 }
 
 model UserRole {
-  id     String @id @default(cuid())
+  id     String @id @default(ulid())
   userId String
   roleId String
 
@@ -216,7 +216,7 @@ model UserRole {
 }
 
 model RolePermission {
-  id           String @id @default(cuid())
+  id           String @id @default(ulid())
   roleId       String
   permissionId String
 
@@ -245,7 +245,7 @@ enum NotificationType {
 }
 
 model Notification {
-  id        String           @id @default(cuid())
+  id        String           @id @default(ulid())
   userId    String
   type      NotificationType
   title     String
@@ -266,7 +266,7 @@ model Notification {
 }
 
 model NotificationSettings {
-  id         String  @id @default(cuid())
+  id         String  @id @default(ulid())
   userId     String  @unique
   newBooking Boolean @default(true)
 
@@ -281,7 +281,7 @@ model NotificationSettings {
 // ==================== Audit Log ====================
 
 model AuditLog {
-  id        String  @id @default(cuid())
+  id        String  @id @default(ulid())
   userId    String? // Nullable for system actions
   action    String // e.g., "user.created", "user.deleted"
   entity    String // e.g., "User", "Post"
@@ -306,7 +306,7 @@ model AuditLog {
 // ==================== Example: Seller Verification ====================
 
 model SellerVerification {
-  id                 String  @id @default(cuid())
+  id                 String  @id @default(ulid())
   userId             String  @unique
   verificationStatus String  @default("PENDING")
   documentUrl        String?
@@ -529,7 +529,7 @@ model BlogView {
 // ==================== CMS Settings ====================
 
 model SiteSettings {
-  id String @id @default(cuid())
+  id String @id @default(ulid())
 
   // Basic Information
   siteName        String  @db.VarChar(255)
@@ -567,7 +567,7 @@ model SiteSettings {
 }
 
 model SEOSettings {
-  id String @id @default(cuid())
+  id String @id @default(ulid())
 
   // Meta Tags
   metaTitle       String?  @db.VarChar(70)
@@ -717,7 +717,7 @@ enum SalaryPaymentStatus {
 }
 
 model Employee {
-  id                       String         @id @default(cuid())
+  id                       String         @id @default(ulid())
   userId                   String?        @unique
   employeeCode             String?        @db.VarChar(50)
   name                     String         @db.VarChar(150)
@@ -793,7 +793,7 @@ model Employee {
 }
 
 model EmployeeAttendance {
-  id           String           @id @default(cuid())
+  id           String           @id @default(ulid())
   employeeId   String
   date         DateTime
   checkInAt    DateTime?
@@ -812,7 +812,7 @@ model EmployeeAttendance {
 }
 
 model EmployeeSalaryIncrement {
-  id              String   @id @default(cuid())
+  id              String   @id @default(ulid())
   employeeId      String
   previousSalary  Decimal  @db.Decimal(10, 2)
   newSalary       Decimal  @db.Decimal(10, 2)
@@ -830,7 +830,7 @@ model EmployeeSalaryIncrement {
 }
 
 model EmployeeSalaryPayment {
-  id             String              @id @default(cuid())
+  id             String              @id @default(ulid())
   employeeId     String
   month          Int
   year           Int
@@ -853,7 +853,7 @@ model EmployeeSalaryPayment {
 // ==================== Shift & Department Management ====================
 
 model Department {
-  id          String  @id @default(cuid())
+  id          String  @id @default(ulid())
   name        String  @unique
   description String?
 
@@ -870,7 +870,7 @@ model Department {
 }
 
 model Shift {
-  id          String  @id @default(cuid())
+  id          String  @id @default(ulid())
   name        String  @unique
   description String?
 
@@ -894,7 +894,7 @@ model Shift {
 }
 
 model ShiftSchedule {
-  id        String @id @default(cuid())
+  id        String @id @default(ulid())
   shiftId   String
   dayOfWeek Int // 0=Sunday, 1=Monday, ..., 6=Saturday
 
@@ -925,7 +925,7 @@ enum ClientType {
 }
 
 model Client {
-  id          String     @id @default(cuid())
+  id          String     @id @default(ulid())
   userId      String?    @unique
   clientCode  String?    @unique @db.VarChar(50)
   name        String     @db.VarChar(200)
@@ -1054,7 +1054,7 @@ enum Priority {
 }
 
 model Project {
-  id          String        @id @default(cuid())
+  id          String        @id @default(ulid())
   name        String        @db.VarChar(200)
   description String?       @db.Text
   status      ProjectStatus @default(PLANNED)
@@ -1082,7 +1082,7 @@ model Project {
 }
 
 model Task {
-  id          String     @id @default(cuid())
+  id          String     @id @default(ulid())
   title       String     @db.VarChar(255)
   description String?    @db.Text
   status      TaskStatus @default(TODO)
@@ -1132,7 +1132,7 @@ enum ReviewStatus {
 }
 
 model KPI {
-  id           String    @id @default(cuid())
+  id           String    @id @default(ulid())
   name         String    @db.VarChar(100)
   description  String?   @db.Text
   unit         String    @db.VarChar(20) // %, count, $, etc.
@@ -1153,7 +1153,7 @@ model KPI {
 }
 
 model Goal {
-  id          String     @id @default(cuid())
+  id          String     @id @default(ulid())
   title       String     @db.VarChar(200)
   description String?    @db.Text
   startDate   DateTime
@@ -1173,7 +1173,7 @@ model Goal {
 }
 
 model PerformanceReview {
-  id               String       @id @default(cuid())
+  id               String       @id @default(ulid())
   rating           Int // 1-5
   feedback         String       @db.Text
   strengths        String?      @db.Text
@@ -1201,7 +1201,7 @@ model PerformanceReview {
 }
 
 model AppraisalHistory {
-  id                      String  @id @default(cuid())
+  id                      String  @id @default(ulid())
   promotionEligible       Boolean @default(false)
   salaryIncrementEligible Boolean @default(false)
   notes                   String? @db.Text
@@ -1242,7 +1242,7 @@ enum AssetActivityType {
 }
 
 model Asset {
-  id           String      @id @default(cuid())
+  id           String      @id @default(ulid())
   name         String      @db.VarChar(150)
   type         String      @db.VarChar(50) // Laptop, Phone, ID Card, etc.
   model        String?     @db.VarChar(100)
@@ -1265,7 +1265,7 @@ model Asset {
 }
 
 model AssetAssignment {
-  id         String    @id @default(cuid())
+  id         String    @id @default(ulid())
   assetId    String
   employeeId String
   assignedAt DateTime  @default(now())
@@ -1287,7 +1287,7 @@ model AssetAssignment {
 }
 
 model AssetHistory {
-  id           String            @id @default(cuid())
+  id           String            @id @default(ulid())
   assetId      String
   activityType AssetActivityType
   description  String            @db.Text
@@ -1315,7 +1315,7 @@ enum AnnouncementType {
 }
 
 model Announcement {
-  id        String           @id @default(cuid())
+  id        String           @id @default(ulid())
   title     String           @db.VarChar(255)
   content   String           @db.Text
   type      AnnouncementType @default(INFO)

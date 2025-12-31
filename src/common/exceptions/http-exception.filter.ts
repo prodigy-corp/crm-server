@@ -62,7 +62,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
     // Log the error
     this.logger.error(
       `${request.method} ${request.url} - ${status} - ${message}`,
-      exception instanceof Error ? exception.stack : exception,
+      exception instanceof HttpException
+        ? JSON.stringify(exception.getResponse())
+        : exception instanceof Error
+          ? exception.stack
+          : exception,
     );
 
     const errorResponse = {
