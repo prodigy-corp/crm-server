@@ -591,14 +591,7 @@ export class AuthService {
     const CLIENT = user.roles.find((role) => role.role.name === 'CLIENT');
     const USER = user.roles.find((role) => role.role.name === 'USER');
 
-    const redirect =
-      ADMIN || SUPER_ADMIN
-        ? '/admin/dashboard'
-        : EMPLOYEE || CLIENT
-          ? '/dashboard'
-          : USER && user.isEmailVerified === true
-            ? `/users/${user.id}`
-            : '/';
+    const redirect = '/dashboard';
 
     return {
       status: true,
@@ -1071,9 +1064,7 @@ export class AuthService {
 
     await this.logLoginAttempt(user.id, req, 'SUCCESS');
 
-    const redirect = user.roles.includes({ role: { name: 'ADMIN' } })
-      ? '/admin'
-      : '/';
+    const redirect = '/dashboard';
 
     return {
       status: true,
