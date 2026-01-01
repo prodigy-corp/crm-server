@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -33,8 +34,8 @@ export class ProjectController {
   @Get()
   @Permissions('projects.read')
   @ApiOperation({ summary: 'Get all projects' })
-  findAll() {
-    return this.projectService.findAll();
+  findAll(@Request() req: any) {
+    return this.projectService.findAll(req.user);
   }
 
   @Get(':id')
@@ -56,5 +57,38 @@ export class ProjectController {
   @ApiOperation({ summary: 'Delete a project' })
   remove(@Param('id') id: string) {
     return this.projectService.remove(id);
+  }
+
+  @Get('dashboard/stats')
+  @Permissions('projects.read')
+  @ApiOperation({ summary: 'Get overall project statistics for dashboard' })
+  getDashboardStats() {
+    return this.projectService.getDashboardStats();
+  }
+
+  @Get(':id/analytics')
+  @Permissions('projects.read')
+  @ApiOperation({ summary: 'Get detailed analytics for a specific project' })
+  getProjectAnalytics(@Param('id') id: string) {
+    return this.projectService.getProjectAnalytics(id);
+  }
+
+  @Post(':id/comments')
+  @Permissions('projects.read')
+  @ApiOperation({ summary: 'Add a comment to a project' })
+  addComment(
+    @Param('id') id: string,
+    @Body('content') content: string,
+    @Request() req: any,
+  ) {
+    const userId = req.user.userId || req.user.id;
+    return this.projectService.addComment(id, userId, content);
+  }
+
+  @Get(':id/comments')
+  @Permissions('projects.read')
+  @ApiOperation({ summary: 'Get all comments for a project' })
+  getComments(@Param('id') id: string) {
+    return this.projectService.getComments(id);
   }
 }

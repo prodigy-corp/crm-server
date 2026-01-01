@@ -42,4 +42,12 @@ export class CreateProjectDto {
   @IsOptional()
   @IsString()
   managerId?: string;
+
+  @ApiPropertyOptional({ example: 1000.0 })
+  @IsOptional()
+  budget?: number;
+
+  @ApiPropertyOptional({ example: 0 })
+  @IsOptional()
+  progress?: number;
 }

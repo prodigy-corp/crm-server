@@ -41,4 +41,8 @@ export class CreateTaskDto {
   @IsOptional()
   @IsString()
   creatorId?: string;
+
+  @ApiPropertyOptional({ example: 4.5 })
+  @IsOptional()
+  estimatedHours?: number;
 }

@@ -48,12 +48,13 @@ export class TaskController {
     @Query('projectId') projectId?: string,
     @Query('assigneeId') assigneeId?: string,
     @Query('status') status?: any,
+    @Request() req?: any,
   ) {
     const filters: any = {};
     if (projectId) filters.projectId = projectId;
     if (assigneeId) filters.assigneeId = assigneeId;
     if (status) filters.status = status;
-    return this.taskService.findAll(filters);
+    return this.taskService.findAll(filters, req?.user);
   }
 
   @Get(':id')
@@ -75,5 +76,65 @@ export class TaskController {
   @ApiOperation({ summary: 'Delete a task' })
   remove(@Param('id') id: string) {
     return this.taskService.remove(id);
+  }
+
+  @Get('analytics/summary')
+  @Permissions('tasks.read')
+  @ApiOperation({ summary: 'Get task analytics summary' })
+  getTaskAnalytics(
+    @Query('projectId') projectId?: string,
+    @Query('assigneeId') assigneeId?: string,
+    @Query('status') status?: any,
+  ) {
+    const filters: any = {};
+    if (projectId) filters.projectId = projectId;
+    if (assigneeId) filters.assigneeId = assigneeId;
+    if (status) filters.status = status;
+    return this.taskService.getTaskAnalytics(filters);
+  }
+
+  @Post(':id/comments')
+  @Permissions('tasks.read')
+  @ApiOperation({ summary: 'Add a comment to a task' })
+  addComment(
+    @Param('id') id: string,
+    @Body('content') content: string,
+    @Request() req: any,
+  ) {
+    const userId = req.user.userId || req.user.id;
+    return this.taskService.addComment(id, userId, content);
+  }
+
+  @Get(':id/comments')
+  @Permissions('tasks.read')
+  @ApiOperation({ summary: 'Get all comments for a task' })
+  getComments(@Param('id') id: string) {
+    return this.taskService.getComments(id);
+  }
+
+  @Post(':id/time-logs')
+  @Permissions('tasks.update')
+  @ApiOperation({ summary: 'Log time spent on a task' })
+  addTimeLog(
+    @Param('id') id: string,
+    @Body() body: { hours: number; description?: string; logDate?: string },
+    @Request() req: any,
+  ) {
+    const userId = req.user.userId || req.user.id;
+    const logDate = body.logDate ? new Date(body.logDate) : undefined;
+    return this.taskService.addTimeLog(
+      id,
+      userId,
+      body.hours,
+      body.description,
+      logDate,
+    );
+  }
+
+  @Get(':id/time-logs')
+  @Permissions('tasks.read')
+  @ApiOperation({ summary: 'Get all time logs for a task' })
+  getTimeLogs(@Param('id') id: string) {
+    return this.taskService.getTimeLogs(id);
   }
 }
