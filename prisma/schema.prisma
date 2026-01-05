@@ -69,11 +69,13 @@ model User {
   client Client?
 
   // Message relations
-  sentMessageRooms     MessageRoom[] @relation("MessageRoomSender")
-  receivedMessageRooms MessageRoom[] @relation("MessageRoomReceiver")
-  sentMessages         Message[]     @relation("MessageSender")
-  receivedMessages     Message[]     @relation("MessageReceiver")
-  createdTasks         Task[]        @relation("TaskCreator")
+  sentMessageRooms     MessageRoom[]       @relation("MessageRoomSender")
+  receivedMessageRooms MessageRoom[]       @relation("MessageRoomReceiver")
+  createdMessageRooms  MessageRoom[]       @relation("MessageRoomCreator")
+  messageRooms         MessageRoomMember[]
+  sentMessages         Message[]           @relation("MessageSender")
+  receivedMessages     Message[]           @relation("MessageReceiver")
+  createdTasks         Task[]              @relation("TaskCreator")
 
   // Project & Task Management
   projectComments ProjectComment[]
@@ -983,23 +985,46 @@ model Client {
 }
 
 model MessageRoom {
-  id         String    @id @default(ulid())
-  sender     User      @relation("MessageRoomSender", fields: [senderId], references: [id])
-  senderId   String
-  receiver   User      @relation("MessageRoomReceiver", fields: [receiverId], references: [id])
-  receiverId String
-  bookingId  String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  messages   Message[]
-  eventId    String?
+  id         String  @id @default(ulid())
+  sender     User?   @relation("MessageRoomSender", fields: [senderId], references: [id])
+  senderId   String?
+  receiver   User?   @relation("MessageRoomReceiver", fields: [receiverId], references: [id])
+  receiverId String?
 
-  @@unique([senderId, receiverId, bookingId], name: "unique_message_room")
+  isGroup   Boolean @default(false)
+  name      String?
+  avatar    String?
+  creatorId String?
+  creator   User?   @relation("MessageRoomCreator", fields: [creatorId], references: [id])
+
+  bookingId String?
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+  messages  Message[]
+  members   MessageRoomMember[]
+  eventId   String?
+
   @@index([createdAt])
   @@index([bookingId])
   @@index([receiverId])
   @@index([senderId])
+  @@index([creatorId])
   @@map("message_rooms")
+}
+
+model MessageRoomMember {
+  id       String      @id @default(ulid())
+  roomId   String
+  room     MessageRoom @relation(fields: [roomId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isAdmin  Boolean     @default(false)
+  joinedAt DateTime    @default(now())
+
+  @@unique([roomId, userId])
+  @@index([roomId])
+  @@index([userId])
+  @@map("message_room_members")
 }
 
 model Message {
@@ -1008,9 +1033,9 @@ model Message {
   roomId   String
   sender   User        @relation("MessageSender", fields: [senderId], references: [id])
   senderId String
-  receiver User        @relation("MessageReceiver", fields: [receiverId], references: [id])
+  receiver User?       @relation("MessageReceiver", fields: [receiverId], references: [id])
 
-  receiverId String
+  receiverId String?
   message    String
   attachment String?
   type       MessageType @default(TEXT)

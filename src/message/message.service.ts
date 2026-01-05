@@ -16,6 +16,14 @@ import {
   paginationQuerySchema,
 } from './dto/pagination.dto';
 import { SidebarQuery, SidebarQuerySchema } from './dto/sidebar.dto';
+import {
+  AddMembersDto,
+  CreateGroupDto,
+  UpdateGroupDto,
+  addMembersSchema,
+  createGroupSchema,
+  updateGroupSchema,
+} from './dto/group.dto';
 
 @Injectable()
 export class MessageService {
@@ -27,7 +35,7 @@ export class MessageService {
   private readonly logger = new Logger(MessageService.name);
 
   /**
-   * Initiate a message conversation with another user
+   * Initiate a message conversation with another user (1-on-1)
    * Creates a message room if it doesn't exist, or sends a message to an existing room
    */
   async initiateMessage(body: InitMessageDto, userId: string) {
@@ -146,8 +154,20 @@ export class MessageService {
       throw new NotFoundException('Message room not found');
     }
 
-    // Verify user is a participant in this room
-    if (
+    // Verify user is a participant or member in this room
+    if (existMessageRoom.isGroup) {
+      const isMember = await this.prisma.messageRoomMember.findUnique({
+        where: {
+          roomId_userId: {
+            roomId: roomId,
+            userId: userId,
+          },
+        },
+      });
+      if (!isMember) {
+        throw new ForbiddenException('You are not a member of this group');
+      }
+    } else if (
       existMessageRoom.senderId !== userId &&
       existMessageRoom.receiverId !== userId
     ) {
@@ -156,11 +176,14 @@ export class MessageService {
       );
     }
 
-    // Determine the receiver (the other person in the room)
-    const receiverId =
-      existMessageRoom.senderId === userId
-        ? existMessageRoom.receiverId
-        : existMessageRoom.senderId;
+    // Determine the receiver (only for 1-on-1 rooms)
+    let receiverId: string | null = null;
+    if (!existMessageRoom.isGroup) {
+      receiverId =
+        existMessageRoom.senderId === userId
+          ? existMessageRoom.receiverId
+          : existMessageRoom.senderId;
+    }
 
     if (parsebody.data.type === 'TEXT' && parsebody.data.message) {
       const newMessage = await this.prisma.message.create({
@@ -277,6 +300,16 @@ export class MessageService {
         receiver: {
           select: { id: true, name: true, avatar: true },
         },
+        members: {
+          include: {
+            user: {
+              select: { id: true, name: true, avatar: true, email: true },
+            },
+          },
+        },
+        creator: {
+          select: { id: true, name: true, avatar: true },
+        },
       },
     });
 
@@ -284,15 +317,26 @@ export class MessageService {
       throw new NotFoundException('Message room not found');
     }
 
-    // Verify user is a participant
-    if (room.senderId !== userId && room.receiverId !== userId) {
+    // Verify user is a participant or member
+    let isMember = false;
+    if (room.isGroup) {
+      isMember = room.members.some((m) => m.userId === userId);
+    } else {
+      isMember = room.senderId === userId || room.receiverId === userId;
+    }
+
+    if (!isMember) {
       throw new ForbiddenException(
         'You are not a participant in this conversation',
       );
     }
 
-    // Determine other user (the person you're chatting with)
-    const otherUser = room.senderId === userId ? room.receiver : room.sender;
+    // Determine other user (only for 1-on-1 rooms)
+    const otherUser = room.isGroup
+      ? null
+      : room.senderId === userId
+        ? room.receiver
+        : room.sender;
 
     return {
       status: true,
@@ -320,29 +364,50 @@ export class MessageService {
     }
     const { search, cursor, limit = `10` } = parsebody.data;
 
-    // Build where clause: restrict to rooms where current user is a participant
-    // If search is provided, filter by the OTHER participant's name
+    // Build where clause: rooms where user is a participant (1-on-1) or member (Group)
     let where: Prisma.MessageRoomWhereInput;
     if (search && search.trim() !== '') {
       where = {
-        OR: [
+        AND: [
           {
-            AND: [
+            OR: [
               { senderId: userId },
-              { receiver: { name: { contains: search, mode: 'insensitive' } } },
+              { receiverId: userId },
+              { members: { some: { userId: userId } } },
             ],
           },
           {
-            AND: [
-              { receiverId: userId },
-              { sender: { name: { contains: search, mode: 'insensitive' } } },
+            OR: [
+              { name: { contains: search, mode: 'insensitive' } },
+              {
+                AND: [
+                  { senderId: userId },
+                  {
+                    receiver: {
+                      name: { contains: search, mode: 'insensitive' },
+                    },
+                  },
+                ],
+              },
+              {
+                AND: [
+                  { receiverId: userId },
+                  {
+                    sender: { name: { contains: search, mode: 'insensitive' } },
+                  },
+                ],
+              },
             ],
           },
         ],
       };
     } else {
       where = {
-        OR: [{ senderId: userId }, { receiverId: userId }],
+        OR: [
+          { senderId: userId },
+          { receiverId: userId },
+          { members: { some: { userId: userId } } },
+        ],
       };
     }
 
@@ -389,9 +454,12 @@ export class MessageService {
       take: parseInt(limit),
     });
 
-    // Transform rooms to include otherUser field
+    // Transform rooms to include otherUser field for 1-on-1 and handle group display
     const transformedRooms = rooms.map((room) => {
-      const otherUser = room.senderId === userId ? room.receiver : room.sender;
+      let otherUser: any = null;
+      if (!room.isGroup) {
+        otherUser = room.senderId === userId ? room.receiver : room.sender;
+      }
       const lastMessage = room.messages[0] || null;
       return {
         ...room,
@@ -436,8 +504,18 @@ export class MessageService {
       throw new NotFoundException('Message room not found');
     }
 
-    // Verify user is a participant
-    if (exist.senderId !== userId && exist.receiverId !== userId) {
+    // Verify user is a participant or member
+    let isMember = false;
+    if (exist.isGroup) {
+      const member = await this.prisma.messageRoomMember.findUnique({
+        where: { roomId_userId: { roomId, userId } },
+      });
+      isMember = !!member;
+    } else {
+      isMember = exist.senderId === userId || exist.receiverId === userId;
+    }
+
+    if (!isMember) {
       throw new ForbiddenException(
         'You are not a participant in this conversation',
       );
@@ -522,8 +600,22 @@ export class MessageService {
       throw new NotFoundException('Message room not found');
     }
 
-    // Verify user is a participant
-    if (exist.senderId !== userId && exist.receiverId !== userId) {
+    // Verify user is a participant or group admin/creator
+    let canDelete = false;
+    if (exist.isGroup) {
+      if (exist.creatorId === userId) {
+        canDelete = true;
+      } else {
+        const member = await this.prisma.messageRoomMember.findUnique({
+          where: { roomId_userId: { roomId, userId } },
+        });
+        canDelete = !!member?.isAdmin;
+      }
+    } else {
+      canDelete = exist.senderId === userId || exist.receiverId === userId;
+    }
+
+    if (!canDelete) {
       throw new ForbiddenException(
         'You are not authorized to delete this conversation.',
       );
@@ -605,6 +697,186 @@ export class MessageService {
         totalPages: Math.ceil(total / limit),
       },
       message: 'Available users fetched successfully.',
+    };
+  }
+
+  /**
+   * Create a new group chat
+   */
+  async createGroup(body: CreateGroupDto, userId: string) {
+    const parse = createGroupSchema.safeParse(body);
+    if (!parse.success) {
+      throw new BadRequestException(parse.error.message);
+    }
+
+    const { name, memberIds } = parse.data;
+
+    // Filter out duplicates and the creator
+    const uniqueMemberIds = [
+      ...new Set(memberIds.filter((id) => id !== userId)),
+    ];
+
+    const newRoom = await this.prisma.messageRoom.create({
+      data: {
+        isGroup: true,
+        name,
+        creatorId: userId,
+        members: {
+          create: [
+            { userId: userId, isAdmin: true },
+            ...uniqueMemberIds.map((id) => ({ userId: id })),
+          ],
+        },
+      },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: { id: true, name: true, avatar: true },
+            },
+          },
+        },
+      },
+    });
+
+    return {
+      status: true,
+      data: newRoom,
+      message: 'Group created successfully.',
+    };
+  }
+
+  /**
+   * Add members to a group
+   */
+  async addMembers(roomId: string, body: AddMembersDto, userId: string) {
+    const parse = addMembersSchema.safeParse(body);
+    if (!parse.success) {
+      throw new BadRequestException(parse.error.message);
+    }
+
+    const room = await this.prisma.messageRoom.findUnique({
+      where: { id: roomId, isGroup: true },
+      include: { members: true },
+    });
+
+    if (!room) {
+      throw new NotFoundException('Group not found');
+    }
+
+    // Check if requester is admin
+    const requester = room.members.find((m) => m.userId === userId);
+    if (!requester?.isAdmin && room.creatorId !== userId) {
+      throw new ForbiddenException('Only admins can add members');
+    }
+
+    const { memberIds } = parse.data;
+    const existingMemberIds = room.members.map((m) => m.userId);
+    const newMemberIds = memberIds.filter(
+      (id) => !existingMemberIds.includes(id),
+    );
+
+    if (newMemberIds.length === 0) {
+      return { status: true, message: 'No new members to add.' };
+    }
+
+    await this.prisma.messageRoomMember.createMany({
+      data: newMemberIds.map((id) => ({
+        roomId,
+        userId: id,
+      })),
+    });
+
+    return {
+      status: true,
+      message: 'Members added successfully.',
+    };
+  }
+
+  /**
+   * Remove a member from a group
+   */
+  async removeMember(roomId: string, targetUserId: string, userId: string) {
+    const room = await this.prisma.messageRoom.findUnique({
+      where: { id: roomId, isGroup: true },
+      include: { members: true },
+    });
+
+    if (!room) {
+      throw new NotFoundException('Group not found');
+    }
+
+    // Check permissions: creator can remove anyone, admin can remove others (except creator), user can remove self
+    const requester = room.members.find((m) => m.userId === userId);
+    const target = room.members.find((m) => m.userId === targetUserId);
+
+    if (!target) {
+      throw new NotFoundException('Member not found in group');
+    }
+
+    const isSelf = targetUserId === userId;
+    const isCreator = room.creatorId === userId;
+    const isAdmin = requester?.isAdmin;
+    const isTargetCreator = room.creatorId === targetUserId;
+
+    if (!isSelf) {
+      if (!isCreator && !isAdmin) {
+        throw new ForbiddenException(
+          'You do not have permission to remove members',
+        );
+      }
+      if (isAdmin && !isCreator && isTargetCreator) {
+        throw new ForbiddenException('Admins cannot remove the group creator');
+      }
+    }
+
+    await this.prisma.messageRoomMember.delete({
+      where: {
+        roomId_userId: {
+          roomId,
+          userId: targetUserId,
+        },
+      },
+    });
+
+    return {
+      status: true,
+      message: isSelf ? 'You left the group.' : 'Member removed successfully.',
+    };
+  }
+
+  /**
+   * Update group details
+   */
+  async updateGroup(roomId: string, body: UpdateGroupDto, userId: string) {
+    const parse = updateGroupSchema.safeParse(body);
+    if (!parse.success) {
+      throw new BadRequestException(parse.error.message);
+    }
+
+    const room = await this.prisma.messageRoom.findUnique({
+      where: { id: roomId, isGroup: true },
+      include: { members: true },
+    });
+
+    if (!room) {
+      throw new NotFoundException('Group not found');
+    }
+
+    const requester = room.members.find((m) => m.userId === userId);
+    if (!requester?.isAdmin && room.creatorId !== userId) {
+      throw new ForbiddenException('Only admins can update group details');
+    }
+
+    const updatedRoom = await this.prisma.messageRoom.update({
+      where: { id: roomId },
+      data: parse.data,
+    });
+
+    return {
+      status: true,
+      data: updatedRoom,
+      message: 'Group updated successfully.',
     };
   }
 }

@@ -23,6 +23,14 @@ import { CreateMessageDto } from './dto/message.dto';
 import { PaginationQueryDto } from './dto/pagination.dto';
 import { SidebarQuery } from './dto/sidebar.dto';
 import { MessageService } from './message.service';
+import {
+  AddMembersDto,
+  CreateGroupDto,
+  UpdateGroupDto,
+  addMembersSchema,
+  createGroupSchema,
+  updateGroupSchema,
+} from './dto/group.dto';
 
 @UseGuards(AuthGuard('jwt'), PermissionsGuard)
 @Controller('messages')
@@ -127,5 +135,60 @@ export class MessageController {
   @Delete(':roomId')
   deleteRoom(@Param('roomId') roomId: string, @Req() req) {
     return this.messageService.deleteRoom(roomId, req.user.userId);
+  }
+
+  /**
+   * Create a new group conversation
+   */
+  @Permissions('message.initiate')
+  @Post('group')
+  createGroup(
+    @Body(new ZodValidationPipe(createGroupSchema)) body: CreateGroupDto,
+    @Req() req,
+  ) {
+    return this.messageService.createGroup(body, req.user.userId);
+  }
+
+  /**
+   * Add members to a group
+   */
+  @Permissions('message.send')
+  @Post(':roomId/members')
+  addMembers(
+    @Param('roomId') roomId: string,
+    @Body(new ZodValidationPipe(addMembersSchema)) body: AddMembersDto,
+    @Req() req,
+  ) {
+    return this.messageService.addMembers(roomId, body, req.user.userId);
+  }
+
+  /**
+   * Remove a member from a group
+   */
+  @Permissions('message.delete')
+  @Delete(':roomId/members/:userId')
+  removeMember(
+    @Param('roomId') roomId: string,
+    @Param('userId') targetUserId: string,
+    @Req() req,
+  ) {
+    return this.messageService.removeMember(
+      roomId,
+      targetUserId,
+      req.user.userId,
+    );
+  }
+
+  /**
+   * Update group details
+   */
+  @Permissions('message.send')
+  @Patch(':roomId/group')
+  updateGroup(
+    @Param('roomId') roomId: string,
+    @Body(new ZodValidationPipe(updateGroupSchema)) body: UpdateGroupDto,
+    @Req() req,
+  ) {
+    return this.messageService.updateGroup(roomId, body, req.user.userId);
   }
 }
